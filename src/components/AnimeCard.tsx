@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Play, Star, Plus, Info, ImageOff } from "lucide-react";
+import { Play, Star, Plus, Info } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface AnimeCardProps {
@@ -38,22 +37,22 @@ export function AnimeCard({
   type = "TV",
 }: AnimeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  
-  const validImage = isValidImageUrl(image) ? image : FALLBACK_IMAGE;
-  const [imgSrc, setImgSrc] = useState(validImage);
+  const [imgSrc, setImgSrc] = useState(() => isValidImageUrl(image) ? image : FALLBACK_IMAGE);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    const newValidImage = isValidImageUrl(image) ? image : FALLBACK_IMAGE;
-    setImgSrc(newValidImage);
-    setImageError(false);
+    const validImage = isValidImageUrl(image) ? image : FALLBACK_IMAGE;
+    setImgSrc(validImage);
+    setHasError(false);
   }, [image]);
 
   const displayRating = typeof rating === "number" ? rating.toFixed(1) : rating || "N/A";
 
   const handleImageError = () => {
-    setImageError(true);
-    setImgSrc(FALLBACK_IMAGE);
+    if (!hasError) {
+      setHasError(true);
+      setImgSrc(FALLBACK_IMAGE);
+    }
   };
 
   return (
@@ -67,20 +66,13 @@ export function AnimeCard({
       transition={{ duration: 0.3 }}
     >
       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-purple-900/20">
-        {!imageError ? (
-          <Image
-            src={imgSrc}
-            alt={title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-110"
-            onError={handleImageError}
-            unoptimized
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-purple-900/30">
-            <ImageOff className="w-12 h-12 text-purple-500/50" />
-          </div>
-        )}
+        <img
+          src={imgSrc}
+          alt={title}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          onError={handleImageError}
+          loading="lazy"
+        />
         
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60" />
 

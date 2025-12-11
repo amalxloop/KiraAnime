@@ -1,5 +1,14 @@
 const HIANIME_API = "https://animo.qzz.io/api/v1";
 
+const FALLBACK_POSTER = "https://cdn.noitatnemucod.net/thumbnail/300x400/100/bcd84731a3eda4f4a306250769675065.jpg";
+
+function getValidPoster(poster: string | undefined | null): string {
+  if (!poster || typeof poster !== "string" || poster.trim() === "") {
+    return FALLBACK_POSTER;
+  }
+  return poster;
+}
+
 export interface AnimeResult {
   id: string;
   name?: string;
@@ -212,7 +221,7 @@ function transformHiAnime(anime: HiAnimeResult): AnimeResult {
     id: anime.id,
     title: title,
     name: title,
-    poster: anime.poster,
+    poster: getValidPoster(anime.poster),
     type: anime.type || "TV",
     rating: anime.rating,
     rank: anime.rank,
@@ -233,7 +242,7 @@ function transformHiSpotlight(anime: HiAnimeSpotlight): SpotlightAnime {
     id: anime.id,
     title: title,
     alternativeTitle: anime.alternativeTitle || anime.jname || title,
-    poster: anime.poster,
+    poster: getValidPoster(anime.poster),
     synopsis: anime.synopsis || anime.description || "No description available.",
     type: anime.type || "TV",
     quality: anime.quality || "HD",

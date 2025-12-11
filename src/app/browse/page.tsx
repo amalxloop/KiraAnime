@@ -26,46 +26,18 @@ const fallbackAnimeData: FallbackAnime[] = [
   { id: "tokyo-revengers-17822", name: "Tokyo Revengers", title: "Tokyo Revengers", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/9c25caf0e77f56b7b76ee5a52ca4290d.jpg", rating: "8.2", type: "TV", episodes: { sub: 37, dub: 37, eps: 37 }, genres: ["action", "drama", "supernatural"] },
   { id: "death-note-60", name: "Death Note", title: "Death Note", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/696e9ec34fa4012ca77d8d32d9e10d85.jpg", rating: "9.0", type: "TV", episodes: { sub: 37, dub: 37, eps: 37 }, genres: ["mystery", "psychological", "thriller", "supernatural"] },
   { id: "fullmetal-alchemist-brotherhood-5", name: "Fullmetal Alchemist", title: "Fullmetal Alchemist", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/2ec8e50c6edf32dee9e7dfd651a5bf1d.jpg", rating: "9.1", type: "TV", episodes: { sub: 64, dub: 64, eps: 64 }, genres: ["action", "adventure", "drama", "fantasy"] },
-  { id: "your-name-6", name: "Your Name", title: "Kimi no Na wa", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/f58b0204c20ae3310f65ae7b8cb9987e.jpg", rating: "9.0", type: "Movie", episodes: { sub: 1, dub: 1, eps: 1 }, genres: ["romance", "drama", "supernatural"] },
-  { id: "a-silent-voice-1728", name: "A Silent Voice", title: "Koe no Katachi", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/af6a1eea26cc29f2d2ef3a75a414b77f.jpg", rating: "8.9", type: "Movie", episodes: { sub: 1, dub: 1, eps: 1 }, genres: ["drama", "romance", "slice of life"] },
-  { id: "spirited-away-889", name: "Spirited Away", title: "Sen to Chihiro", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/a95dfdb22d2bc4eefaa9f4c1c1ff2e6e.jpg", rating: "9.3", type: "Movie", episodes: { sub: 1, dub: 1, eps: 1 }, genres: ["adventure", "drama", "fantasy", "supernatural"] },
-  { id: "steins-gate-3", name: "Steins;Gate", title: "Steins;Gate", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/90cdf6f2c41ec2e52bdbb4f7b0b6c79d.jpg", rating: "9.1", type: "TV", episodes: { sub: 24, dub: 24, eps: 24 }, genres: ["sci-fi", "thriller", "drama", "psychological"] },
-  { id: "code-geass-lelouch-of-the-rebellion-18", name: "Code Geass", title: "Code Geass", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/87e403c1c5f9fc82e1fa6ccb79d41c93.jpg", rating: "8.7", type: "TV", episodes: { sub: 25, dub: 25, eps: 25 }, genres: ["action", "drama", "mecha", "military", "sci-fi"] },
-  { id: "hunter-x-hunter-2011-1028", name: "Hunter x Hunter", title: "Hunter x Hunter", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/eb50eb4bcbed7f2f740a83a8c1b4e58c.jpg", rating: "9.1", type: "TV", episodes: { sub: 148, dub: 148, eps: 148 }, genres: ["action", "adventure", "fantasy"] },
-  { id: "violet-evergarden-10379", name: "Violet Evergarden", title: "Violet Evergarden", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/4a4c1b89b6e65e6a908ecb89d2f17a66.jpg", rating: "8.7", type: "TV", episodes: { sub: 13, dub: 13, eps: 13 }, genres: ["drama", "fantasy", "slice of life"] },
-  { id: "sword-art-online-1686", name: "Sword Art Online", title: "Sword Art Online", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/f0ad1f6aebb76c81a44e3fcc7fb8fffc.jpg", rating: "7.6", type: "TV", episodes: { sub: 25, dub: 25, eps: 25 }, genres: ["action", "adventure", "fantasy", "romance", "game"] },
-  { id: "one-punch-man-1-15", name: "One Punch Man", title: "One Punch Man", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/3227d947edc11f4cc07fde02ee7d tried.jpg", rating: "8.5", type: "TV", episodes: { sub: 24, dub: 24, eps: 24 }, genres: ["action", "comedy", "parody", "super power"] },
-  { id: "mob-psycho-100-2566", name: "Mob Psycho 100", title: "Mob Psycho 100", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/016a63a4c6af6bcf4ea9e18a72cc77b3.jpg", rating: "8.5", type: "TV", episodes: { sub: 12, dub: 12, eps: 12 }, genres: ["action", "comedy", "supernatural"] },
-  { id: "bleach-thousand-year-blood-war-18411", name: "Bleach TYBW", title: "Bleach TYBW", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/1c960ac6ab22e66a81c4a5c59ef2b89a.jpg", rating: "9.0", type: "TV", episodes: { sub: 26, dub: 26, eps: 26 }, genres: ["action", "adventure", "supernatural"] },
-  { id: "dragon-ball-super-1064", name: "Dragon Ball Super", title: "Dragon Ball Super", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/cf57c359f32e2c400a1a3df115df9dc9.jpg", rating: "7.4", type: "TV", episodes: { sub: 131, dub: 131, eps: 131 }, genres: ["action", "adventure", "comedy", "martial arts", "super power"] },
-  { id: "black-clover-2404", name: "Black Clover", title: "Black Clover", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/f58b0e0d84fd5f5f6dc10acb7e68e2c8.jpg", rating: "8.3", type: "TV", episodes: { sub: 170, dub: 170, eps: 170 }, genres: ["action", "comedy", "fantasy", "magic"] },
-  { id: "horimiya-16919", name: "Horimiya", title: "Horimiya", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/8fc6c5f1ffdc7a0ad9e27df28fdc89bf.jpg", rating: "8.3", type: "TV", episodes: { sub: 13, dub: 13, eps: 13 }, genres: ["romance", "comedy", "slice of life", "school"] },
-  { id: "toradora-1283", name: "Toradora!", title: "Toradora!", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/8af0e53b7f12f8af06fe3b6e5e7c1285.jpg", rating: "8.1", type: "TV", episodes: { sub: 25, dub: 25, eps: 25 }, genres: ["comedy", "romance", "slice of life", "school"] },
-  { id: "kaguya-sama-love-is-war-14151", name: "Kaguya-sama", title: "Kaguya-sama", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/f0c6b7b6c8db0c06e2a8cf741a1c5fb5.jpg", rating: "8.6", type: "TV", episodes: { sub: 12, dub: 12, eps: 12 }, genres: ["comedy", "romance", "psychological", "school"] },
-  { id: "re-zero-starting-life-in-another-world-2099", name: "Re:Zero", title: "Re:Zero", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/88e08d8d3efb48bf0c49faacb8e36c17.jpg", rating: "8.3", type: "TV", episodes: { sub: 25, dub: 25, eps: 25 }, genres: ["drama", "fantasy", "psychological", "thriller", "isekai"] },
-  { id: "konosuba-gods-blessing-on-this-wonderful-world-2107", name: "Konosuba", title: "Konosuba", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/c11c5e7f8c1c2d55e8f94e07a7e6acae.jpg", rating: "8.1", type: "TV", episodes: { sub: 10, dub: 10, eps: 10 }, genres: ["adventure", "comedy", "fantasy", "isekai", "parody"] },
-  { id: "that-time-i-got-reincarnated-as-a-slime-11382", name: "Slime Isekai", title: "Tensei Shitara Slime", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/e7b6be33af31d8c7db74aadd0028fa88.jpg", rating: "8.2", type: "TV", episodes: { sub: 24, dub: 24, eps: 24 }, genres: ["action", "adventure", "comedy", "fantasy", "isekai"] },
-  { id: "the-rising-of-the-shield-hero-13618", name: "Shield Hero", title: "Tate no Yuusha", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/ffe9f5d7c86f91c9b0c8e3d45ee9d6f8.jpg", rating: "7.9", type: "TV", episodes: { sub: 25, dub: 25, eps: 25 }, genres: ["action", "adventure", "drama", "fantasy", "isekai"] },
-  { id: "overlord-2477", name: "Overlord", title: "Overlord", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/1b847dfed83869c2d26c02b9bde6377c.jpg", rating: "7.9", type: "TV", episodes: { sub: 13, dub: 13, eps: 13 }, genres: ["action", "fantasy", "game", "supernatural", "isekai"] },
-  { id: "mushoku-tensei-jobless-reincarnation-16963", name: "Mushoku Tensei", title: "Mushoku Tensei", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/aa3f2ce34cc3e52c8c4b7b2fc6be14e9.jpg", rating: "8.4", type: "TV", episodes: { sub: 23, dub: 23, eps: 23 }, genres: ["adventure", "drama", "fantasy", "isekai"] },
-  { id: "haikyuu-2393", name: "Haikyuu!!", title: "Haikyuu!!", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/17f7c7f80e10b42fd5f2d12efcc2dc68.jpg", rating: "8.6", type: "TV", episodes: { sub: 25, dub: 25, eps: 25 }, genres: ["comedy", "drama", "sports", "school"] },
-  { id: "kuroko-no-basket-1298", name: "Kuroko no Basket", title: "Kuroko no Basket", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/2ee89e9c9fe72b4d4e8ef5ae16a3e34c.jpg", rating: "8.2", type: "TV", episodes: { sub: 25, dub: 25, eps: 25 }, genres: ["comedy", "sports", "school"] },
-  { id: "blue-lock-18422", name: "Blue Lock", title: "Blue Lock", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/9e6c5c90e0f3f8e50edab7082b7f7b5e.jpg", rating: "8.4", type: "TV", episodes: { sub: 24, dub: 24, eps: 24 }, genres: ["sports", "drama"] },
-  { id: "tokyo-ghoul-1574", name: "Tokyo Ghoul", title: "Tokyo Ghoul", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/a89af3d777b2b3d6b4d9c2b0b5e8e5a7.jpg", rating: "7.8", type: "TV", episodes: { sub: 12, dub: 12, eps: 12 }, genres: ["action", "drama", "horror", "mystery", "psychological", "supernatural"] },
-  { id: "parasyte-the-maxim-1937", name: "Parasyte", title: "Kiseijuu", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/6f90df0f3f0c9b8c68d3c37f1f15e0f0.jpg", rating: "8.4", type: "TV", episodes: { sub: 24, dub: 24, eps: 24 }, genres: ["action", "drama", "horror", "psychological", "sci-fi"] },
-  { id: "another-5765", name: "Another", title: "Another", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/3f3c2f2d6ff54c7bcd3bad4c02d3c3cc.jpg", rating: "7.5", type: "TV", episodes: { sub: 12, dub: 12, eps: 12 }, genres: ["horror", "mystery", "supernatural", "thriller", "school"] },
-  { id: "promised-neverland-13569", name: "Promised Neverland", title: "Yakusoku no Neverland", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/8bb9e1f8b2c8d1faebdb2e2c3e8f8b9a.jpg", rating: "8.5", type: "TV", episodes: { sub: 12, dub: 12, eps: 12 }, genres: ["mystery", "psychological", "thriller", "horror"] },
-  { id: "erased-2078", name: "Erased", title: "Boku dake ga Inai Machi", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/0b6f1a6e2e39d3e2ca3c5e8b0f7a8e2a.jpg", rating: "8.4", type: "TV", episodes: { sub: 12, dub: 12, eps: 12 }, genres: ["mystery", "psychological", "supernatural", "thriller"] },
-  { id: "neon-genesis-evangelion-1239", name: "Evangelion", title: "Evangelion", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/79cd6b8b1a0c6ee1e1a1f2f4e3d2c1b0.jpg", rating: "8.3", type: "TV", episodes: { sub: 26, dub: 26, eps: 26 }, genres: ["action", "drama", "mecha", "psychological", "sci-fi"] },
-  { id: "cowboy-bebop-2", name: "Cowboy Bebop", title: "Cowboy Bebop", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/e0d6d5bb0c9c4f8b5c3e2a1f0d9c8b7a.jpg", rating: "8.8", type: "TV", episodes: { sub: 26, dub: 26, eps: 26 }, genres: ["action", "adventure", "drama", "sci-fi", "space"] },
-  { id: "fruits-basket-1st-season-14720", name: "Fruits Basket", title: "Fruits Basket", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/f7e6d5c4b3a2918070605040302010.jpg", rating: "8.3", type: "TV", episodes: { sub: 25, dub: 25, eps: 25 }, genres: ["comedy", "drama", "romance", "slice of life", "supernatural"] },
-  { id: "clannad-after-story-1277", name: "Clannad After Story", title: "Clannad AS", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/5a4b3c2d1e0f9g8h7i6j5k4l3m2n1o0p.jpg", rating: "9.0", type: "TV", episodes: { sub: 24, dub: 24, eps: 24 }, genres: ["drama", "romance", "slice of life", "supernatural"] },
-  { id: "bocchi-the-rock-18775", name: "Bocchi the Rock!", title: "Bocchi the Rock!", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/52cb7143f42f3abda05c5f19a52dbfb4.jpg", rating: "8.7", type: "TV", episodes: { sub: 12, dub: 12, eps: 12 }, genres: ["comedy", "music", "slice of life"] },
-  { id: "frieren-beyond-journeys-end-19264", name: "Frieren", title: "Sousou no Frieren", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/efc0a5f6e9dc9a6b8e7f6d5c4b3a2918.jpg", rating: "9.1", type: "TV", episodes: { sub: 28, dub: 28, eps: 28 }, genres: ["adventure", "drama", "fantasy"] },
-  { id: "oshi-no-ko-18869", name: "Oshi no Ko", title: "Oshi no Ko", poster: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/0e7f6d5c4b3a29180706050403020100.jpg", rating: "8.9", type: "TV", episodes: { sub: 11, dub: 11, eps: 11 }, genres: ["drama", "mystery", "supernatural"] },
 ];
 
 const defaultGenres = ["action", "adventure", "comedy", "drama", "fantasy", "horror", "mystery", "romance", "sci-fi", "slice of life", "sports", "supernatural", "isekai", "psychological", "thriller", "school", "mecha", "music"];
+
+const FALLBACK_POSTER = "https://cdn.noitatnemucod.net/thumbnail/300x400/100/bcd84731a3eda4f4a306250769675065.jpg";
+
+function getValidPoster(poster: string | undefined | null): string {
+  if (!poster || typeof poster !== "string" || poster.trim() === "") {
+    return FALLBACK_POSTER;
+  }
+  return poster;
+}
 
 function BrowseContent() {
   const searchParams = useSearchParams();
@@ -125,23 +97,32 @@ function BrowseContent() {
       if (searchQuery.trim()) {
         const result = await search(searchQuery, page);
         if (result.animes && result.animes.length > 0) {
-          setAnimeList(result.animes);
+          const animesWithValidPosters = result.animes.map(a => ({
+            ...a,
+            poster: getValidPoster(a.poster)
+          }));
+          setAnimeList(animesWithValidPosters);
           setHasNextPage(result.hasNextPage);
           return;
         }
-      } else if (selectedGenre || selectedType || selectedStatus) {
-        const result = await filter({
-          genre: selectedGenre || undefined,
-          type: selectedType || undefined,
-          status: selectedStatus || undefined,
-          sort: sortBy && sortBy !== "default" ? sortBy : undefined,
-          page,
-        });
-        if (result.animes && result.animes.length > 0) {
-          setAnimeList(result.animes);
-          setHasNextPage(result.hasNextPage);
-          return;
-        }
+      }
+      
+      const result = await filter({
+        genre: selectedGenre || undefined,
+        type: selectedType || undefined,
+        status: selectedStatus || undefined,
+        sort: sortBy && sortBy !== "default" ? sortBy : undefined,
+        page,
+      });
+      
+      if (result.animes && result.animes.length > 0) {
+        const animesWithValidPosters = result.animes.map(a => ({
+          ...a,
+          poster: getValidPoster(a.poster)
+        }));
+        setAnimeList(animesWithValidPosters);
+        setHasNextPage(result.hasNextPage);
+        return;
       }
       
       const fallbackFiltered = getFilteredFallbackAnime();
