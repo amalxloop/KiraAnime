@@ -1,0 +1,60 @@
+import { NextRequest, NextResponse } from "next/server";
+
+const API_BASE = "https://animo.qzz.io/api/v1";
+const FALLBACK_API = "https://api.isoumya.xyz/api/v1";
+
+export async function GET(request: NextRequest) {
+  const endpoint = request.nextUrl.searchParams.get("endpoint") || "/home";
+  
+  const tryFetch = async (base: string, timeoutMs: number = 15000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    
+    try {
+      const url = `${base}${endpoint}`;
+      const res = await fetch(url, {
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        },
+        signal: controller.signal,
+        cache: "no-store",
+      });
+      clearTimeout(timeoutId);
+      
+      const text = await res.text();
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
+      if (text.startsWith("<!") || text.startsWith("<html") || text.includes("error code:")) {
+        throw new Error("Cloudflare blocked request");
+      }
+      
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new Error("Invalid JSON response");
+      }
+    } catch (e) {
+      clearTimeout(timeoutId);
+      throw e;
+    }
+  };
+
+  try {
+    const data = await tryFetch(API_BASE);
+    return NextResponse.json(data);
+  } catch {
+    try {
+      const data = await tryFetch(FALLBACK_API, 10000);
+      return NextResponse.json(data);
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "API unavailable", data: null },
+        { status: 503 }
+      );
+    }
+  }
+}
