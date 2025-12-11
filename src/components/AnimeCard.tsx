@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Play, Star, Plus, Info, ImageOff } from "lucide-react";
@@ -17,6 +17,18 @@ interface AnimeCardProps {
 
 const FALLBACK_IMAGE = "https://cdn.noitatnemucod.net/thumbnail/300x400/100/bcd84731a3eda4f4a306250769675065.jpg";
 
+function isValidImageUrl(url: string | undefined | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  if (url.trim() === "") return false;
+  if (url.includes("undefined") || url.includes("null")) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function AnimeCard({
   id,
   title,
@@ -27,7 +39,15 @@ export function AnimeCard({
 }: AnimeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [imgSrc, setImgSrc] = useState(image || FALLBACK_IMAGE);
+  
+  const validImage = isValidImageUrl(image) ? image : FALLBACK_IMAGE;
+  const [imgSrc, setImgSrc] = useState(validImage);
+
+  useEffect(() => {
+    const newValidImage = isValidImageUrl(image) ? image : FALLBACK_IMAGE;
+    setImgSrc(newValidImage);
+    setImageError(false);
+  }, [image]);
 
   const displayRating = typeof rating === "number" ? rating.toFixed(1) : rating || "N/A";
 
