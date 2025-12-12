@@ -422,14 +422,14 @@ function FilterDropdown({
         {isOpen && (
           <>
             <div
-              className="fixed inset-0 z-40"
+              className="fixed inset-0 z-[100]"
               onClick={() => setIsOpen(false)}
             />
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full left-0 mt-2 w-full min-w-[160px] max-h-60 overflow-auto rounded-xl bg-[#0f0a1e] border border-purple-500/20 shadow-xl z-50"
+              className="absolute top-full left-0 mt-2 w-full min-w-[160px] max-h-60 overflow-y-auto rounded-xl bg-[#0f0a1e] border border-purple-500/20 shadow-2xl z-[101] overscroll-contain"
             >
               {showClear && value && (
                 <button
@@ -437,7 +437,7 @@ function FilterDropdown({
                     onChange(null);
                     setIsOpen(false);
                   }}
-                  className="w-full px-4 py-2 text-left text-purple-400 hover:bg-white/5 border-b border-purple-500/10"
+                  className="w-full px-4 py-3 text-left text-purple-400 hover:bg-white/5 border-b border-purple-500/10 active:bg-white/10 touch-manipulation"
                 >
                   Clear
                 </button>
@@ -449,10 +449,10 @@ function FilterDropdown({
                     onChange(option);
                     setIsOpen(false);
                   }}
-                  className={`w-full px-4 py-2 text-left transition-colors ${
+                  className={`w-full px-4 py-3 text-left transition-colors touch-manipulation ${
                     value === option
                       ? "bg-purple-500/20 text-purple-300"
-                      : "text-gray-300 hover:bg-white/5"
+                      : "text-gray-300 hover:bg-white/5 active:bg-white/10"
                   }`}
                 >
                   {formatLabel(option)}

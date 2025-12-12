@@ -39,12 +39,16 @@ export function AnimeCard({
   const [isHovered, setIsHovered] = useState(false);
   const [imgSrc, setImgSrc] = useState(() => isValidImageUrl(image) ? image : FALLBACK_IMAGE);
   const [hasError, setHasError] = useState(false);
+  const [imageKey, setImageKey] = useState(0);
 
   useEffect(() => {
     const validImage = isValidImageUrl(image) ? image : FALLBACK_IMAGE;
-    setImgSrc(validImage);
-    setHasError(false);
-  }, [image]);
+    if (imgSrc !== validImage) {
+      setImgSrc(validImage);
+      setHasError(false);
+      setImageKey(prev => prev + 1);
+    }
+  }, [image, imgSrc]);
 
   const displayRating = typeof rating === "number" ? rating.toFixed(1) : rating || "N/A";
 
@@ -52,6 +56,7 @@ export function AnimeCard({
     if (!hasError) {
       setHasError(true);
       setImgSrc(FALLBACK_IMAGE);
+      setImageKey(prev => prev + 1);
     }
   };
 
@@ -67,6 +72,7 @@ export function AnimeCard({
     >
       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-purple-900/20">
         <img
+          key={`${id}-${imageKey}`}
           src={imgSrc}
           alt={title}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
