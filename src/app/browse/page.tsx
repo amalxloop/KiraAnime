@@ -404,12 +404,23 @@ function FilterDropdown({
     return str.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   return (
     <div className={`relative ${fullWidth ? "w-full" : ""}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between gap-2 px-4 py-2 rounded-lg bg-white/5 border border-purple-500/20 text-white hover:bg-white/10 transition-colors ${
-          fullWidth ? "w-full" : "min-w-[120px]"
+        className={`flex items-center justify-between gap-2 px-4 py-3 rounded-lg bg-white/5 border border-purple-500/20 text-white hover:bg-white/10 active:bg-white/15 transition-colors touch-manipulation ${
+          fullWidth ? "w-full" : "min-w-[140px]"
         }`}
       >
         <span className={value ? "text-white" : "text-gray-400"}>
@@ -420,46 +431,60 @@ function FilterDropdown({
 
       <AnimatePresence>
         {isOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-[100]"
-              onClick={() => setIsOpen(false)}
-            />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsOpen(false)}
+          >
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full left-0 mt-2 w-full min-w-[160px] max-h-60 overflow-y-auto rounded-xl bg-[#0f0a1e] border border-purple-500/20 shadow-2xl z-[101] overscroll-contain"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl bg-[#0f0a1e] border border-purple-500/30 shadow-2xl overflow-hidden"
             >
-              {showClear && value && (
-                <button
-                  onClick={() => {
-                    onChange(null);
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-4 py-3 text-left text-purple-400 hover:bg-white/5 border-b border-purple-500/10 active:bg-white/10 touch-manipulation"
-                >
-                  Clear
-                </button>
-              )}
-              {options.map((option) => (
-                <button
-                  key={option}
-                  onClick={() => {
-                    onChange(option);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full px-4 py-3 text-left transition-colors touch-manipulation ${
-                    value === option
-                      ? "bg-purple-500/20 text-purple-300"
-                      : "text-gray-300 hover:bg-white/5 active:bg-white/10"
-                  }`}
-                >
-                  {formatLabel(option)}
-                </button>
-              ))}
+              <div className="px-4 py-3 border-b border-purple-500/20">
+                <h3 className="text-white font-medium">{label}</h3>
+              </div>
+              <div 
+                className="max-h-[60vh] overflow-y-auto overscroll-contain"
+                style={{ 
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: 'pan-y'
+                } as React.CSSProperties}
+              >
+                {showClear && value && (
+                  <button
+                    onClick={() => {
+                      onChange(null);
+                      setIsOpen(false);
+                    }}
+                    className="w-full px-4 py-3 text-left text-purple-400 hover:bg-white/5 active:bg-white/10 border-b border-purple-500/10 transition-colors touch-manipulation"
+                  >
+                    Clear
+                  </button>
+                )}
+                {options.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => {
+                      onChange(option);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left transition-colors touch-manipulation ${
+                      value === option
+                        ? "bg-purple-500/20 text-purple-300"
+                        : "text-gray-300 hover:bg-white/5 active:bg-white/10"
+                    }`}
+                  >
+                    {formatLabel(option)}
+                  </button>
+                ))}
+              </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

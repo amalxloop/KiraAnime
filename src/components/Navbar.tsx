@@ -18,6 +18,7 @@ export function Navbar() {
     { href: "/movies", label: "Movies" },
     { href: "/series", label: "Series" },
     { href: "/popular", label: "Popular" },
+    { href: "/my-list", label: "My List" },
   ];
 
   const handleSearch = (e: React.FormEvent) => {

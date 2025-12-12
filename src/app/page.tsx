@@ -2,6 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { HeroCarousel } from "@/components/HeroCarousel";
 import { AnimeSection } from "@/components/AnimeSection";
 import { Footer } from "@/components/Footer";
+import { WatchHistory } from "@/components/WatchHistory";
 import { getHome } from "@/lib/api";
 import { Sparkles, Film, Flame, Clock } from "lucide-react";
 import Link from "next/link";
@@ -76,6 +77,8 @@ export default async function Home() {
     <div className="min-h-screen bg-[#030014]">
       <Navbar />
       <HeroCarousel spotlightAnimes={spotlightAnimes} />
+      
+      <WatchHistory />
 
       <div className="relative">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
