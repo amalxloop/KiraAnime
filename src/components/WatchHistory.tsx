@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Clock, Play } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -79,10 +80,11 @@ export function WatchHistory() {
             >
               <Link href={`/watch/${item.episode_id}`} className="block">
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-purple-900/20">
-                  <img
+                  <Image
                     src={item.anime_poster || "https://cdn.noitatnemucod.net/thumbnail/300x400/100/bcd84731a3eda4f4a306250769675065.jpg"}
                     alt={item.anime_title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60" />

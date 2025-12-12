@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, use, useRef } from "react";
+import { useState, useEffect, use } from "react";
 import { Navbar } from "@/components/Navbar";
 import { AnimeCard } from "@/components/AnimeCard";
-import { getAnimeInfo, getEpisodes, getServers, getEmbedUrl, type Episode, type AnimeInfo, type ServersData } from "@/lib/api";
+import { VideoPlayer } from "@/components/VideoPlayer";
+import { getAnimeInfo, getEpisodes, getServers, type Episode, type AnimeInfo, type ServersData } from "@/lib/api";
 import { Play, ChevronLeft, ChevronRight, Loader2, List, Server } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -33,8 +34,6 @@ export default function WatchPage({ params }: PageProps) {
   const [servers, setServers] = useState<ServersData | null>(null);
   const [selectedServer, setSelectedServer] = useState("hd-2");
   const [selectedCategory, setSelectedCategory] = useState<"sub" | "dub">("sub");
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const progressInterval = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     async function loadData() {
@@ -84,54 +83,6 @@ export default function WatchPage({ params }: PageProps) {
     loadData();
   }, [id, epParam]);
 
-  useEffect(() => {
-    if (!currentEp || !animeData) return;
-
-    const anime = animeData.anime.info;
-    
-    const saveProgress = async (progress: number, duration: number) => {
-      try {
-        await fetch("/api/watch-history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            anime_id: id,
-            anime_title: anime.name,
-            anime_poster: anime.poster,
-            episode_id: currentEp.episodeId,
-            episode_number: currentEp.number,
-            progress_seconds: Math.floor(progress),
-            duration_seconds: Math.floor(duration),
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to save watch history:", error);
-      }
-    };
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === "videoProgress") {
-        const { currentTime, duration } = event.data;
-        saveProgress(currentTime, duration);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    
-    progressInterval.current = setInterval(() => {
-      if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage({ type: "getProgress" }, "*");
-      }
-    }, 10000);
-
-    return () => {
-      window.removeEventListener("message", handleMessage);
-      if (progressInterval.current) {
-        clearInterval(progressInterval.current);
-      }
-    };
-  }, [currentEp, animeData, id]);
-
   const handleEpisodeChange = async (ep: Episode) => {
     setCurrentEp(ep);
     window.history.replaceState(null, "", `/watch/${id}?ep=${ep.number}`);
@@ -179,7 +130,6 @@ export default function WatchPage({ params }: PageProps) {
 
   const anime = animeData?.anime.info || { id, name: formatIdToTitle(id), poster: "", description: "" };
   const recommendedAnime = animeData?.recommendedAnimes || [];
-  const embedUrl = currentEp ? getEmbedUrl(currentEp.episodeId, selectedServer, selectedCategory) : null;
 
   return (
     <div className="min-h-screen bg-[#030014]">
@@ -190,14 +140,30 @@ export default function WatchPage({ params }: PageProps) {
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="flex-1">
               <div className="relative aspect-video rounded-2xl overflow-hidden bg-black mb-4">
-                {embedUrl ? (
-                  <iframe
-                    ref={iframeRef}
-                    src={embedUrl}
-                    className="absolute inset-0 w-full h-full"
-                    allowFullScreen
-                    allow="autoplay; fullscreen; picture-in-picture"
-                    frameBorder="0"
+                {currentEp ? (
+                  <VideoPlayer
+                    episodeId={currentEp.episodeId}
+                    server={selectedServer}
+                    category={selectedCategory}
+                    onProgress={async (currentTime, duration) => {
+                      try {
+                        await fetch("/api/watch-history", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            anime_id: id,
+                            anime_title: anime.name,
+                            anime_poster: anime.poster,
+                            episode_id: currentEp.episodeId,
+                            episode_number: currentEp.number,
+                            progress_seconds: Math.floor(currentTime),
+                            duration_seconds: Math.floor(duration),
+                          }),
+                        });
+                      } catch (error) {
+                        console.error("Failed to save watch history:", error);
+                      }
+                    }}
                   />
                 ) : (
                   <>

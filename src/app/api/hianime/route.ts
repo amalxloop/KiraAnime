@@ -45,16 +45,46 @@ export async function GET(request: NextRequest) {
 
   try {
     const data = await tryFetch(API_BASE);
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Range",
+      },
+    });
   } catch {
     try {
       const data = await tryFetch(FALLBACK_API, 10000);
-      return NextResponse.json(data);
+      return NextResponse.json(data, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Range",
+        },
+      });
     } catch {
       return NextResponse.json(
         { success: false, error: "API unavailable", data: null },
-        { status: 503 }
+        { 
+          status: 503,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Range",
+          },
+        }
       );
     }
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Range",
+    },
+  });
 }

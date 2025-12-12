@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Play, Star, Plus, Info, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useMyList } from "@/contexts/MyListContext";
 
 interface AnimeCardProps {
   id: string;
@@ -41,8 +43,10 @@ export function AnimeCard({
   const [imgSrc, setImgSrc] = useState(() => isValidImageUrl(image) ? image : FALLBACK_IMAGE);
   const [hasError, setHasError] = useState(false);
   const [imageKey, setImageKey] = useState(0);
-  const [inList, setInList] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const { isInList, addToList, removeFromList } = useMyList();
+  const inList = isInList(id);
 
   useEffect(() => {
     const validImage = isValidImageUrl(image) ? image : FALLBACK_IMAGE;
@@ -53,23 +57,6 @@ export function AnimeCard({
     }
   }, [image, imgSrc]);
 
-  useEffect(() => {
-    checkIfInList();
-  }, [id]);
-
-  const checkIfInList = async () => {
-    try {
-      const response = await fetch("/api/my-list");
-      const result = await response.json();
-      if (result.success) {
-        const exists = result.data?.some((item: any) => item.anime_id === id);
-        setInList(exists);
-      }
-    } catch (error) {
-      console.error("Error checking list:", error);
-    }
-  };
-
   const handleAddToList = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -79,37 +66,25 @@ export function AnimeCard({
 
     try {
       if (inList) {
-        const response = await fetch(`/api/my-list?anime_id=${id}`, {
-          method: "DELETE",
-        });
-        const result = await response.json();
-        
-        if (result.success) {
-          setInList(false);
+        const success = await removeFromList(id);
+        if (success) {
           toast.success("Removed from My List");
         } else {
-          toast.error(result.error || "Failed to remove from list");
+          toast.error("Failed to remove from list");
         }
       } else {
-        const response = await fetch("/api/my-list", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            anime_id: id,
-            anime_title: title,
-            anime_poster: imgSrc,
-            anime_type: type,
-            anime_rating: String(rating || "N/A"),
-            anime_episodes: episodes || 0,
-          }),
+        const success = await addToList({
+          anime_id: id,
+          anime_title: title,
+          anime_poster: imgSrc,
+          anime_type: type,
+          anime_rating: String(rating || "N/A"),
+          anime_episodes: episodes || 0,
         });
-        const result = await response.json();
-        
-        if (result.success) {
-          setInList(true);
+        if (success) {
           toast.success("Added to My List");
         } else {
-          toast.error(result.error || "Failed to add to list");
+          toast.error("Failed to add to list");
         }
       }
     } catch (error) {
@@ -141,11 +116,12 @@ export function AnimeCard({
       transition={{ duration: 0.3 }}
     >
       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-purple-900/20">
-        <img
+        <Image
           key={`${id}-${imageKey}`}
           src={imgSrc}
           alt={title}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-110"
           onError={handleImageError}
           loading="lazy"
         />

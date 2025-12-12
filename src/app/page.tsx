@@ -6,6 +6,22 @@ import { WatchHistory } from "@/components/WatchHistory";
 import { getHome } from "@/lib/api";
 import { Sparkles, Film, Flame, Clock } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Watch Anime Online Free - Stream HD Anime Series & Movies",
+  description: "Watch thousands of anime series and movies online free in HD quality. Stream trending anime like One Piece, Jujutsu Kaisen, Demon Slayer, Attack on Titan, and more with English subs and dubs.",
+  keywords: ["watch anime online", "free anime streaming", "anime HD", "trending anime", "popular anime series", "anime movies", "English subtitles", "anime dub"],
+  openGraph: {
+    title: "Watch Anime Online Free - Stream HD Anime Series & Movies",
+    description: "Watch thousands of anime series and movies online free in HD quality. Stream trending anime with English subs and dubs.",
+    type: "website",
+    url: "https://kiraanime.com",
+  },
+  alternates: {
+    canonical: "https://kiraanime.com",
+  },
+};
 
 const fallbackAnime = [
   { id: "one-piece-100", title: "One Piece", image: "https://cdn.noitatnemucod.net/thumbnail/300x400/100/bcd84731a3eda4f4a306250769675065.jpg", rating: "9.2", episodes: 1100, type: "TV" },
@@ -73,8 +89,48 @@ export default async function Home() {
 
   const spotlightAnimes = homeData.spotlight || [];
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "KiraAnime",
+    "description": "Stream thousands of anime series and movies free in HD quality",
+    "url": "https://kiraanime.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://kiraanime.com/browse?search={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
+  const itemListData = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": trendingAnime.slice(0, 10).map((anime, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "Movie",
+        "name": anime.title,
+        "image": anime.image,
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": anime.rating,
+          "bestRating": "10"
+        }
+      }
+    }))
+  };
+
   return (
     <div className="min-h-screen bg-[#030014]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListData) }}
+      />
       <Navbar />
       <HeroCarousel spotlightAnimes={spotlightAnimes} />
       

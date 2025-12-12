@@ -9,6 +9,15 @@ import { search, filter, getGenres, type AnimeResult } from "@/lib/api";
 import { Search, SlidersHorizontal, X, ChevronDown, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+interface FilterDropdownProps {
+  label: string;
+  value: string | null;
+  options: string[];
+  onChange: (value: string | null) => void;
+  showClear?: boolean;
+  fullWidth?: boolean;
+}
+
 interface FallbackAnime extends AnimeResult {
   genres: string[];
 }
@@ -379,15 +388,6 @@ export default function BrowsePage() {
       <BrowseContent />
     </Suspense>
   );
-}
-
-interface FilterDropdownProps {
-  label: string;
-  value: string | null;
-  options: string[];
-  onChange: (value: string | null) => void;
-  showClear?: boolean;
-  fullWidth?: boolean;
 }
 
 function FilterDropdown({
