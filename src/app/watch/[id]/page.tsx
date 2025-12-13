@@ -23,9 +23,20 @@ function formatIdToTitle(id: string): string {
 }
 
 export default function WatchPage({ params }: PageProps) {
-  const { id } = use(params);
+  const { id: rawId } = use(params);
   const searchParams = useSearchParams();
-  const epParam = searchParams.get("ep");
+  
+  // Handle malformed URLs like "anime-id::ep=123" by splitting on "::"
+  let id = rawId;
+  let epParamFromId: string | null = null;
+  
+  if (rawId.includes("::ep=")) {
+    const parts = rawId.split("::ep=");
+    id = parts[0];
+    epParamFromId = parts[1];
+  }
+  
+  const epParam = searchParams.get("ep") || epParamFromId;
 
   const [animeData, setAnimeData] = useState<AnimeInfo | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -34,15 +45,31 @@ export default function WatchPage({ params }: PageProps) {
   const [servers, setServers] = useState<ServersData | null>(null);
   const [selectedServer, setSelectedServer] = useState("hd-2");
   const [selectedCategory, setSelectedCategory] = useState<"sub" | "dub">("sub");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
+        setError(null);
         const epsData = await getEpisodes(id);
         setEpisodes(epsData.episodes || []);
 
-        const epNumber = epParam ? parseInt(epParam) : 1;
-        const ep = epsData.episodes?.find((e) => e.number === epNumber) || epsData.episodes?.[0];
+        // Try to match by episode number or episode ID
+        let ep: Episode | undefined;
+        if (epParam) {
+          const epNumber = parseInt(epParam);
+          // First try to match by episode number
+          ep = epsData.episodes?.find((e) => e.number === epNumber);
+          // If not found, try to match by episode ID (in case the URL has episodeId instead)
+          if (!ep) {
+            ep = epsData.episodes?.find((e) => e.episodeId.includes(epParam));
+          }
+        }
+        // Fall back to first episode if no match found
+        if (!ep) {
+          ep = epsData.episodes?.[0];
+        }
+        
         if (ep) {
           setCurrentEp(ep);
           getServers(ep.episodeId).then(setServers).catch(() => {});
@@ -76,6 +103,7 @@ export default function WatchPage({ params }: PageProps) {
         }
       } catch (error) {
         console.error("Error loading anime:", error);
+        setError("Failed to load anime data. The API might be temporarily unavailable.");
       } finally {
         setLoading(false);
       }
@@ -114,13 +142,13 @@ export default function WatchPage({ params }: PageProps) {
     );
   }
 
-  if (!animeData && episodes.length === 0) {
+  if (error || (!animeData && episodes.length === 0)) {
     return (
       <div className="min-h-screen bg-[#030014] flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md px-4">
           <h1 className="text-2xl font-bold text-white mb-4">Unable to load anime</h1>
-          <p className="text-gray-400 mb-4">The anime data could not be fetched. Please try again later.</p>
-          <Link href="/browse" className="text-purple-400 hover:underline">
+          <p className="text-gray-400 mb-6">{error || "The anime data could not be fetched. Please try again later."}</p>
+          <Link href="/browse" className="inline-block px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-500 text-white font-medium transition-colors">
             Browse Anime
           </Link>
         </div>
