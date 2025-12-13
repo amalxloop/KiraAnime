@@ -71,6 +71,12 @@ export function WatchHistory() {
             ? (item.progress_seconds / item.duration_seconds) * 100
             : 0;
 
+          // Parse episode_id to handle format "anime-id::ep=123"
+          const [animeId, epParam] = item.episode_id.includes("::ep=")
+            ? item.episode_id.split("::ep=")
+            : [item.episode_id, null];
+          const watchUrl = epParam ? `/watch/${animeId}?ep=${epParam}` : `/watch/${animeId}`;
+
           return (
             <motion.div
               key={item.id}
@@ -78,7 +84,7 @@ export function WatchHistory() {
               animate={{ opacity: 1, y: 0 }}
               className="group relative"
             >
-              <Link href={`/watch/${item.episode_id}`} className="block">
+              <Link href={watchUrl} className="block">
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-purple-900/20">
                   <Image
                     src={item.anime_poster || "https://cdn.noitatnemucod.net/thumbnail/300x400/100/bcd84731a3eda4f4a306250769675065.jpg"}
