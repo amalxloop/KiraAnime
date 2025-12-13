@@ -139,6 +139,8 @@
   background: rgba(15, 10, 30, 0.8);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(139, 92, 246, 0.2);
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .gradient-border {
@@ -174,6 +176,50 @@
 
 .animate-pulse-glow {
   animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* TV and large screen optimizations */
+@media (min-width: 1920px) {
+  .glass {
+    backdrop-filter: blur(8px);
+  }
+  
+  .animate-pulse-glow {
+    animation: none;
+    opacity: 0.5;
+  }
+  
+  body * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  [class*="blur-"] {
+    filter: blur(80px) !important;
+  }
+}
+
+/* Hardware acceleration for critical elements */
+nav, 
+.hero-carousel,
+.navbar,
+[class*="fixed"],
+[class*="sticky"] {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Reduce motion for TV browsers */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 nextjs-portal {

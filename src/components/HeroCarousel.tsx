@@ -97,8 +97,8 @@ export function HeroCarousel({ spotlightAnimes }: HeroCarouselProps) {
   };
 
   return (
-    <div className="relative h-[85vh] min-h-[600px] overflow-hidden">
-      <AnimatePresence initial={false} custom={direction}>
+    <div className="relative h-[85vh] min-h-[600px] overflow-hidden hero-carousel" style={{ willChange: 'transform', transform: 'translateZ(0)' }}>
+      <AnimatePresence initial={false} custom={direction} mode="sync">
         <motion.div
           key={currentIndex}
           custom={direction}
@@ -107,10 +107,11 @@ export function HeroCarousel({ spotlightAnimes }: HeroCarouselProps) {
           animate="center"
           exit="exit"
           transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.2 },
+            x: { type: "spring", stiffness: 200, damping: 25 },
+            opacity: { duration: 0.3 },
           }}
           className="absolute inset-0 z-0"
+          style={{ willChange: 'transform, opacity' }}
         >
           <Image
             src={current.poster}
@@ -118,14 +119,15 @@ export function HeroCarousel({ spotlightAnimes }: HeroCarouselProps) {
             fill
             className="object-cover"
             priority
+            quality={85}
           />
           
           <div className="absolute inset-0 bg-gradient-to-r from-[#030014] via-[#030014]/80 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#030014] via-transparent to-[#030014]/50" />
           
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/30 rounded-full blur-[120px] animate-pulse-glow" />
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/30 rounded-full blur-[120px] animate-pulse-glow" style={{ animationDelay: "1.5s" }} />
+          <div className="absolute inset-0 opacity-30 tv-glow-container">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/30 rounded-full blur-[80px]" />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/30 rounded-full blur-[80px]" style={{ animationDelay: "1.5s" }} />
           </div>
         </motion.div>
       </AnimatePresence>
@@ -133,9 +135,9 @@ export function HeroCarousel({ spotlightAnimes }: HeroCarouselProps) {
       <div className="relative z-10 h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
         <motion.div
           key={`content-${currentIndex}`}
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
           className="max-w-2xl"
         >
           <div className="flex items-center gap-3 mb-4">
@@ -189,11 +191,12 @@ export function HeroCarousel({ spotlightAnimes }: HeroCarouselProps) {
               setDirection(index > currentIndex ? 1 : -1);
               setCurrentIndex(index);
             }}
-            className={`w-2 h-2 rounded-full transition-all ${
+            className={`transition-all ${
               index === currentIndex
-                ? "w-8 bg-purple-500"
-                : "bg-white/30 hover:bg-white/50"
-            }`}
+                ? "w-8 h-2 bg-purple-500"
+                : "w-2 h-2 bg-white/30 hover:bg-white/50"
+            } rounded-full`}
+            aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>
@@ -201,12 +204,14 @@ export function HeroCarousel({ spotlightAnimes }: HeroCarouselProps) {
       <button
         onClick={handlePrev}
         className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white backdrop-blur-sm transition-colors hidden sm:block z-20"
+        aria-label="Previous slide"
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
       <button
         onClick={handleNext}
         className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white backdrop-blur-sm transition-colors hidden sm:block z-20"
+        aria-label="Next slide"
       >
         <ChevronRight className="w-6 h-6" />
       </button>

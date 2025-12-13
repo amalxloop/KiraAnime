@@ -256,7 +256,7 @@ function transformHiSpotlight(anime: HiAnimeSpotlight): SpotlightAnime {
   };
 }
 
-async function fetchHiAnime<T>(endpoint: string): Promise<T> {
+async function fetchHiAnime<T>(endpoint: string, retries = 3): Promise<T> {
   const isBrowser = typeof window !== "undefined";
   
   let url: string;
@@ -266,13 +266,36 @@ async function fetchHiAnime<T>(endpoint: string): Promise<T> {
     url = `${HIANIME_API}${endpoint}`;
   }
   
-  const res = await fetch(url, {
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`API Error: ${res.status}`);
-  const json = await res.json();
-  if (json.success === false) throw new Error(json.message || "API unavailable");
-  return json.data || json;
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(15000),
+      });
+      
+      if (!res.ok) {
+        if (res.status >= 500 && attempt < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+          continue;
+        }
+        throw new Error(`API Error: ${res.status}`);
+      }
+      
+      const json = await res.json();
+      if (json.success === false) throw new Error(json.message || "API unavailable");
+      return json.data || json;
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < retries - 1 && (error as Error).name !== 'AbortError') {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        continue;
+      }
+    }
+  }
+  
+  throw lastError || new Error("Failed to fetch data");
 }
 
 export async function getHome(): Promise<HomeData> {
