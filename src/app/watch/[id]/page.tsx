@@ -167,7 +167,7 @@ export default function WatchPage({ params }: PageProps) {
     if (prevEp) handleEpisodeChange(prevEp);
   };
 
-  if (loading) {
+  if (loading || isRedirecting) {
     return (
       <div className="min-h-screen bg-[#030014] flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
