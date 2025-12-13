@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
-import { Loader2 } from "lucide-react";
+import { Loader2, Settings, Subtitles, Maximize, Minimize, Volume2, VolumeX, Play, Pause } from "lucide-react";
 
 interface VideoPlayerProps {
   episodeId: string;
@@ -11,11 +11,37 @@ interface VideoPlayerProps {
   onProgress?: (currentTime: number, duration: number) => void;
 }
 
+interface Track {
+  file: string;
+  label: string;
+  kind: string;
+  default?: boolean;
+}
+
+interface QualityLevel {
+  height: number;
+  bitrate: number;
+  index: number;
+}
+
 export function VideoPlayer({ episodeId, server = "hd-2", category = "sub", onProgress }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subtitles, setSubtitles] = useState<Track[]>([]);
+  const [selectedSubtitle, setSelectedSubtitle] = useState<string | null>(null);
+  const [qualityLevels, setQualityLevels] = useState<QualityLevel[]>([]);
+  const [selectedQuality, setSelectedQuality] = useState<number>(-1);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showSubtitles, setShowSubtitles] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -45,6 +71,16 @@ export function VideoPlayer({ episodeId, server = "hd-2", category = "sub", onPr
           throw new Error("No video source available");
         }
 
+        // Load subtitles if available
+        if (streamData.tracks && Array.isArray(streamData.tracks)) {
+          const subtitleTracks = streamData.tracks.filter((t: Track) => t.kind === "captions" || t.kind === "subtitles");
+          setSubtitles(subtitleTracks);
+          const defaultTrack = subtitleTracks.find((t: Track) => t.default);
+          if (defaultTrack) {
+            setSelectedSubtitle(defaultTrack.file);
+          }
+        }
+
         const loadSource = async (sourceUrl: string, isRetry = false) => {
           return new Promise<void>((resolve, reject) => {
             if (Hls.isSupported()) {
@@ -65,8 +101,27 @@ export function VideoPlayer({ episodeId, server = "hd-2", category = "sub", onPr
               hls.loadSource(sourceUrl);
               hls.attachMedia(video);
 
-              hls.on(Hls.Events.MANIFEST_PARSED, () => {
+              hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
                 setLoading(false);
+                
+                // Extract quality levels
+                const levels: QualityLevel[] = data.levels.map((level: any, index: number) => ({
+                  height: level.height,
+                  bitrate: level.bitrate,
+                  index,
+                }));
+                setQualityLevels(levels);
+                
+                // Set default quality to 1080p or highest available
+                const q1080 = levels.findIndex(l => l.height === 1080);
+                if (q1080 !== -1) {
+                  hls.currentLevel = q1080;
+                  setSelectedQuality(q1080);
+                } else {
+                  hls.currentLevel = levels.length - 1;
+                  setSelectedQuality(levels.length - 1);
+                }
+                
                 video.play().catch(() => {});
                 resolve();
               });
@@ -127,17 +182,115 @@ export function VideoPlayer({ episodeId, server = "hd-2", category = "sub", onPr
       if (onProgress && video) {
         onProgress(video.currentTime, video.duration);
       }
+      setCurrentTime(video.currentTime);
+      setDuration(video.duration);
+    };
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleVolumeChange = () => {
+      setVolume(video.volume);
+      setIsMuted(video.muted);
     };
 
     video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("pause", handlePause);
+    video.addEventListener("volumechange", handleVolumeChange);
 
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("play", handlePlay);
+      video.removeEventListener("pause", handlePause);
+      video.removeEventListener("volumechange", handleVolumeChange);
       if (hlsRef.current) {
         hlsRef.current.destroy();
       }
     };
   }, [episodeId, server, category, onProgress]);
+
+  const togglePlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play();
+    } else {
+      video.pause();
+    }
+  };
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.volume = parseFloat(e.target.value);
+  };
+
+  const toggleFullscreen = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (!document.fullscreenElement) {
+      container.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = parseFloat(e.target.value);
+  };
+
+  const changeQuality = (index: number) => {
+    const hls = hlsRef.current;
+    if (!hls) return;
+    
+    hls.currentLevel = index;
+    setSelectedQuality(index);
+    setShowSettings(false);
+  };
+
+  const changeSubtitle = (trackFile: string | null) => {
+    setSelectedSubtitle(trackFile);
+    setShowSubtitles(false);
+    
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Remove existing text tracks
+    Array.from(video.textTracks).forEach(track => {
+      track.mode = "hidden";
+    });
+
+    if (trackFile) {
+      // Find and enable the selected track
+      const track = Array.from(video.textTracks).find(t => 
+        subtitles.find(s => s.file === trackFile)?.label === t.label
+      );
+      if (track) {
+        track.mode = "showing";
+      }
+    }
+  };
+
+  const formatTime = (time: number) => {
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = Math.floor(time % 60);
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
 
   if (error) {
     return (
@@ -151,20 +304,150 @@ export function VideoPlayer({ episodeId, server = "hd-2", category = "sub", onPr
   }
 
   return (
-    <div className="relative w-full h-full bg-black group">
+    <div ref={containerRef} className="relative w-full h-full bg-black group">
       <video
         ref={videoRef}
         className="w-full h-full"
-        controls
         playsInline
         preload="auto"
-      />
+        crossOrigin="anonymous"
+      >
+        {subtitles.map((track, idx) => (
+          <track
+            key={idx}
+            kind={track.kind}
+            label={track.label}
+            src={track.file}
+            default={track.default}
+          />
+        ))}
+      </video>
       
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80">
           <Loader2 className="w-12 h-12 text-purple-500 animate-spin" />
         </div>
       )}
+
+      {/* Custom Controls */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Progress Bar */}
+        <input
+          type="range"
+          min="0"
+          max={duration || 0}
+          value={currentTime}
+          onChange={handleSeek}
+          className="w-full h-1 mb-4 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-purple-500"
+        />
+
+        {/* Controls Row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {/* Play/Pause */}
+            <button onClick={togglePlay} className="text-white hover:text-purple-400 transition-colors">
+              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+            </button>
+
+            {/* Volume */}
+            <div className="flex items-center gap-2">
+              <button onClick={toggleMute} className="text-white hover:text-purple-400 transition-colors">
+                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={volume}
+                onChange={handleVolumeChange}
+                className="w-20 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-purple-500"
+              />
+            </div>
+
+            {/* Time */}
+            <span className="text-white text-sm">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Subtitles */}
+            {subtitles.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowSubtitles(!showSubtitles)}
+                  className={`p-2 rounded hover:bg-white/10 transition-colors ${selectedSubtitle ? "text-purple-400" : "text-white"}`}
+                >
+                  <Subtitles className="w-5 h-5" />
+                </button>
+                {showSubtitles && (
+                  <div className="absolute bottom-full right-0 mb-2 bg-black/95 border border-purple-500/20 rounded-lg p-2 min-w-[200px]">
+                    <button
+                      onClick={() => changeSubtitle(null)}
+                      className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${!selectedSubtitle ? "bg-purple-600 text-white" : "text-gray-300 hover:bg-white/10"}`}
+                    >
+                      Off
+                    </button>
+                    {subtitles.map((track, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => changeSubtitle(track.file)}
+                        className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${selectedSubtitle === track.file ? "bg-purple-600 text-white" : "text-gray-300 hover:bg-white/10"}`}
+                      >
+                        {track.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Quality Settings */}
+            {qualityLevels.length > 1 && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  className="p-2 rounded hover:bg-white/10 text-white transition-colors"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+                {showSettings && (
+                  <div className="absolute bottom-full right-0 mb-2 bg-black/95 border border-purple-500/20 rounded-lg p-2 min-w-[150px]">
+                    <div className="text-gray-400 text-xs font-semibold px-3 py-1 mb-1">Quality</div>
+                    <button
+                      onClick={() => {
+                        if (hlsRef.current) {
+                          hlsRef.current.currentLevel = -1;
+                          setSelectedQuality(-1);
+                          setShowSettings(false);
+                        }
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${selectedQuality === -1 ? "bg-purple-600 text-white" : "text-gray-300 hover:bg-white/10"}`}
+                    >
+                      Auto
+                    </button>
+                    {qualityLevels.sort((a, b) => b.height - a.height).map((level) => (
+                      <button
+                        key={level.index}
+                        onClick={() => changeQuality(level.index)}
+                        className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${selectedQuality === level.index ? "bg-purple-600 text-white" : "text-gray-300 hover:bg-white/10"}`}
+                      >
+                        {level.height}p
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Fullscreen */}
+            <button onClick={toggleFullscreen} className="p-2 rounded hover:bg-white/10 text-white transition-colors">
+              {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
