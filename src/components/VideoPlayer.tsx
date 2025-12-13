@@ -285,29 +285,43 @@ export function VideoPlayer({ episodeId, server = "hd-2", category = "sub", onPr
     }
   };
 
-  // Enable default subtitle on video load
+  // Enable subtitle when tracks are loaded
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !selectedSubtitle) return;
+    if (!video || !selectedSubtitle || subtitles.length === 0) return;
 
     const enableSubtitle = () => {
-      const track = Array.from(video.textTracks).find(t => 
-        subtitles.find(s => s.file === selectedSubtitle)?.label === t.label
-      );
-      if (track) {
-        track.mode = "showing";
-      }
+      // Wait a bit for tracks to be properly loaded
+      setTimeout(() => {
+        if (video.textTracks.length > 0) {
+          Array.from(video.textTracks).forEach(track => {
+            track.mode = "disabled";
+          });
+
+          const matchingTrack = Array.from(video.textTracks).find(track => {
+            const subtitle = subtitles.find(s => s.file === selectedSubtitle);
+            return subtitle && track.label === subtitle.label;
+          });
+
+          if (matchingTrack) {
+            matchingTrack.mode = "showing";
+            console.log("Enabled subtitle:", matchingTrack.label);
+          }
+        }
+      }, 500);
     };
 
     video.addEventListener("loadedmetadata", enableSubtitle);
+    video.addEventListener("canplay", enableSubtitle);
     
-    // Try to enable immediately if metadata is already loaded
+    // Try immediately if already loaded
     if (video.readyState >= 1) {
       enableSubtitle();
     }
 
     return () => {
       video.removeEventListener("loadedmetadata", enableSubtitle);
+      video.removeEventListener("canplay", enableSubtitle);
     };
   }, [selectedSubtitle, subtitles]);
 
