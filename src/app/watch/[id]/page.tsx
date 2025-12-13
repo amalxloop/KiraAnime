@@ -34,6 +34,11 @@ export default function WatchPage({ params }: PageProps) {
     const parts = rawId.split("::ep=");
     id = parts[0];
     epParamFromId = parts[1];
+    
+    // Redirect to correct URL format
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", `/watch/${id}?ep=${epParamFromId}`);
+    }
   }
   
   const epParam = searchParams.get("ep") || epParamFromId;
@@ -51,28 +56,47 @@ export default function WatchPage({ params }: PageProps) {
     async function loadData() {
       try {
         setError(null);
+        console.log("[Watch] Loading data for id:", id, "epParam:", epParam);
+        
         const epsData = await getEpisodes(id);
+        console.log("[Watch] Episodes loaded:", epsData.episodes?.length, "episodes");
         setEpisodes(epsData.episodes || []);
 
         // Try to match by episode number or episode ID
         let ep: Episode | undefined;
         if (epParam) {
-          const epNumber = parseInt(epParam);
           // First try to match by episode number
-          ep = epsData.episodes?.find((e) => e.number === epNumber);
-          // If not found, try to match by episode ID (in case the URL has episodeId instead)
+          const epNumber = parseInt(epParam);
+          if (!isNaN(epNumber)) {
+            ep = epsData.episodes?.find((e) => e.number === epNumber);
+            console.log("[Watch] Matched by episode number:", epNumber, "found:", !!ep);
+          }
+          
+          // If not found, try to match by episode ID (full ID like "anime-id::ep=159297")
+          if (!ep) {
+            const fullEpisodeId = `${id}::ep=${epParam}`;
+            ep = epsData.episodes?.find((e) => e.episodeId === fullEpisodeId);
+            console.log("[Watch] Matched by full episode ID:", fullEpisodeId, "found:", !!ep);
+          }
+          
+          // Try partial match on episode ID
           if (!ep) {
             ep = epsData.episodes?.find((e) => e.episodeId.includes(epParam));
+            console.log("[Watch] Matched by partial episode ID:", epParam, "found:", !!ep);
           }
         }
         // Fall back to first episode if no match found
         if (!ep) {
           ep = epsData.episodes?.[0];
+          console.log("[Watch] Falling back to first episode:", ep?.number);
         }
         
         if (ep) {
           setCurrentEp(ep);
-          getServers(ep.episodeId).then(setServers).catch(() => {});
+          console.log("[Watch] Loading servers for episode:", ep.episodeId);
+          getServers(ep.episodeId).then(setServers).catch((err) => {
+            console.error("[Watch] Error loading servers:", err);
+          });
         }
 
         try {
@@ -103,7 +127,7 @@ export default function WatchPage({ params }: PageProps) {
         }
       } catch (error) {
         console.error("Error loading anime:", error);
-        setError("Failed to load anime data. The API might be temporarily unavailable.");
+        setError(`Failed to load anime data: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
