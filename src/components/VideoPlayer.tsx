@@ -78,6 +78,9 @@ export function VideoPlayer({ episodeId, server = "hd-2", category = "sub", onPr
           const defaultTrack = subtitleTracks.find((t: Track) => t.default);
           if (defaultTrack) {
             setSelectedSubtitle(defaultTrack.file);
+          } else if (subtitleTracks.length > 0) {
+            // Enable first subtitle track if no default
+            setSelectedSubtitle(subtitleTracks[0].file);
           }
         }
 
@@ -266,9 +269,9 @@ export function VideoPlayer({ episodeId, server = "hd-2", category = "sub", onPr
     const video = videoRef.current;
     if (!video) return;
 
-    // Remove existing text tracks
+    // Disable all text tracks first
     Array.from(video.textTracks).forEach(track => {
-      track.mode = "hidden";
+      track.mode = "disabled";
     });
 
     if (trackFile) {
@@ -281,6 +284,32 @@ export function VideoPlayer({ episodeId, server = "hd-2", category = "sub", onPr
       }
     }
   };
+
+  // Enable default subtitle on video load
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !selectedSubtitle) return;
+
+    const enableSubtitle = () => {
+      const track = Array.from(video.textTracks).find(t => 
+        subtitles.find(s => s.file === selectedSubtitle)?.label === t.label
+      );
+      if (track) {
+        track.mode = "showing";
+      }
+    };
+
+    video.addEventListener("loadedmetadata", enableSubtitle);
+    
+    // Try to enable immediately if metadata is already loaded
+    if (video.readyState >= 1) {
+      enableSubtitle();
+    }
+
+    return () => {
+      video.removeEventListener("loadedmetadata", enableSubtitle);
+    };
+  }, [selectedSubtitle, subtitles]);
 
   const formatTime = (time: number) => {
     const hours = Math.floor(time / 3600);
