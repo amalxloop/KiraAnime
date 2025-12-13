@@ -216,7 +216,7 @@ export default function TermsPage() {
                 </p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>Our GitHub repository: <a href="https://github.com/amalxloop/kiraanime" className="text-purple-400 hover:text-purple-300">github.com/amalxloop/kiraanime</a></li>
-                  <li>Email: support@kiraanime.com</li>
+                  <li>Email: kirastreams@proton.me</li>
                   <li>Contact form on our website</li>
                 </ul>
               </div>
