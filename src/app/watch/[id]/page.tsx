@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { AnimeCard } from "@/components/AnimeCard";
 import { VideoPlayer } from "@/components/VideoPlayer";
@@ -23,25 +24,30 @@ function formatIdToTitle(id: string): string {
 }
 
 export default function WatchPage({ params }: PageProps) {
+  const router = useRouter();
   const { id: rawId } = use(params);
   const searchParams = useSearchParams();
   
-  // Handle malformed URLs like "anime-id::ep=123" by splitting on "::"
-  let id = rawId;
-  let epParamFromId: string | null = null;
+  // Handle malformed URLs like "anime-id::ep=123" with client-side redirect
+  const [id, setId] = useState(rawId);
+  const [epParam, setEpParam] = useState<string | null>(searchParams.get("ep"));
+  const [isRedirecting, setIsRedirecting] = useState(rawId.includes("::ep="));
   
-  if (rawId.includes("::ep=")) {
-    const parts = rawId.split("::ep=");
-    id = parts[0];
-    epParamFromId = parts[1];
-    
-    // Redirect to correct URL format
-    if (typeof window !== "undefined") {
-      window.history.replaceState(null, "", `/watch/${id}?ep=${epParamFromId}`);
+  useEffect(() => {
+    if (rawId.includes("::ep=")) {
+      const parts = rawId.split("::ep=");
+      const cleanId = parts[0];
+      const ep = parts[1];
+      router.replace(`/watch/${cleanId}?ep=${ep}`);
+      setId(cleanId);
+      setEpParam(ep);
+      setIsRedirecting(true);
+      return;
     }
-  }
-  
-  const epParam = searchParams.get("ep") || epParamFromId;
+    setId(rawId);
+    setEpParam(searchParams.get("ep"));
+    setIsRedirecting(false);
+  }, [rawId, searchParams, router]);
 
   const [animeData, setAnimeData] = useState<AnimeInfo | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -53,6 +59,9 @@ export default function WatchPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Don't load data while redirecting
+    if (isRedirecting) return;
+    
     async function loadData() {
       try {
         setError(null);
@@ -133,7 +142,7 @@ export default function WatchPage({ params }: PageProps) {
       }
     }
     loadData();
-  }, [id, epParam]);
+  }, [id, epParam, isRedirecting]);
 
   const handleEpisodeChange = async (ep: Episode) => {
     setCurrentEp(ep);
