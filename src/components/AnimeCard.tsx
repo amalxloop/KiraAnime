@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Play, Star, Plus, Info, Check } from "lucide-react";
-import { motion } from "framer-motion";
+import { Play, Star, Plus, Info, Check, Clock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useMyList } from "@/contexts/MyListContext";
 
@@ -15,21 +15,10 @@ interface AnimeCardProps {
   rating?: string | number;
   episodes?: number;
   type?: string;
+  duration?: string;
 }
 
 const FALLBACK_IMAGE = "https://cdn.noitatnemucod.net/thumbnail/300x400/100/bcd84731a3eda4f4a306250769675065.jpg";
-
-function isValidImageUrl(url: string | undefined | null): boolean {
-  if (!url || typeof url !== "string") return false;
-  if (url.trim() === "") return false;
-  if (url.includes("undefined") || url.includes("null")) return false;
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 export function AnimeCard({
   id,
@@ -38,24 +27,14 @@ export function AnimeCard({
   rating,
   episodes,
   type = "TV",
+  duration,
 }: AnimeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [imgSrc, setImgSrc] = useState(() => isValidImageUrl(image) ? image : FALLBACK_IMAGE);
-  const [hasError, setHasError] = useState(false);
-  const [imageKey, setImageKey] = useState(0);
+  const [imgSrc, setImgSrc] = useState(image || FALLBACK_IMAGE);
   const [loading, setLoading] = useState(false);
 
   const { isInList, addToList, removeFromList } = useMyList();
   const inList = isInList(id);
-
-  useEffect(() => {
-    const validImage = isValidImageUrl(image) ? image : FALLBACK_IMAGE;
-    if (imgSrc !== validImage) {
-      setImgSrc(validImage);
-      setHasError(false);
-      setImageKey(prev => prev + 1);
-    }
-  }, [image, imgSrc]);
 
   const handleAddToList = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -67,11 +46,7 @@ export function AnimeCard({
     try {
       if (inList) {
         const success = await removeFromList(id);
-        if (success) {
-          toast.success("Removed from My List");
-        } else {
-          toast.error("Failed to remove from list");
-        }
+        if (success) toast.success("Removed from My List");
       } else {
         const success = await addToList({
           anime_id: id,
@@ -81,106 +56,89 @@ export function AnimeCard({
           anime_rating: String(rating || "N/A"),
           anime_episodes: episodes || 0,
         });
-        if (success) {
-          toast.success("Added to My List");
-        } else {
-          toast.error("Failed to add to list");
-        }
+        if (success) toast.success("Added to My List");
       }
-    } catch (error) {
-      console.error("Error updating list:", error);
-      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  const displayRating = typeof rating === "number" ? rating.toFixed(1) : rating || "N/A";
-
-  const handleImageError = () => {
-    if (!hasError) {
-      setHasError(true);
-      setImgSrc(FALLBACK_IMAGE);
-      setImageKey(prev => prev + 1);
-    }
-  };
-
   return (
     <motion.div
-      className="relative group cursor-pointer"
+      className="relative group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.05, zIndex: 10 }}
-      transition={{ duration: 0.3 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ y: -10 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
     >
-      <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-purple-900/20">
+      <Link href={`/anime/${id}`} className="block relative aspect-[2/3] rounded-2xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl">
         <Image
-          key={`${id}-${imageKey}`}
           src={imgSrc}
           alt={title}
           fill
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
-          onError={handleImageError}
+          className="object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1"
+          onError={() => setImgSrc(FALLBACK_IMAGE)}
           loading="lazy"
         />
         
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#030014] via-[#030014]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-        <div className="absolute top-2 left-2 flex gap-2">
-          <span className="px-2 py-1 rounded-md bg-purple-600/90 text-white text-xs font-medium">
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          <span className="px-3 py-1 rounded-lg bg-[#030014]/80 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest border border-white/10">
             {type}
           </span>
         </div>
 
-        <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-black/60 backdrop-blur-sm">
+        <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#030014]/80 backdrop-blur-md border border-white/10">
           <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-          <span className="text-white text-xs font-medium">{displayRating}</span>
+          <span className="text-white text-[10px] font-black">{rating || "N/A"}</span>
         </div>
 
-        <motion.div
-          className="absolute inset-0 flex items-center justify-center gap-3 bg-black/60 backdrop-blur-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isHovered ? 1 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Link
-            href={`/watch/${id}`}
-            className="p-3 rounded-full bg-purple-600 hover:bg-purple-500 transition-colors neon-glow"
-          >
-            <Play className="w-5 h-5 text-white fill-white" />
-          </Link>
-          <button 
-            onClick={handleAddToList}
-            disabled={loading}
-            className={`p-3 rounded-full transition-colors backdrop-blur-sm ${
-              inList 
-                ? "bg-green-600 hover:bg-green-500" 
-                : "bg-white/10 hover:bg-white/20"
-            } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            {inList ? (
-              <Check className="w-5 h-5 text-white" />
-            ) : (
-              <Plus className="w-5 h-5 text-white" />
-            )}
-          </button>
-          <Link
-            href={`/anime/${id}`}
-            className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-sm"
-          >
-            <Info className="w-5 h-5 text-white" />
-          </Link>
-        </motion.div>
+        <AnimatePresence>
+          {isHovered && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute inset-x-0 bottom-0 p-4 z-20"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <Link
+                  href={`/watch/${id}`}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-black text-xs font-black hover:bg-purple-500 hover:text-white transition-all transform active:scale-95"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  PLAY
+                </Link>
+                <button
+                  onClick={handleAddToList}
+                  className={`p-3 rounded-xl backdrop-blur-md border border-white/10 transition-all transform active:scale-90 ${
+                    inList ? "bg-purple-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
+                  }`}
+                >
+                  {inList ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Link>
 
-        <div className="absolute bottom-0 left-0 right-0 p-3">
-          <h3 className="text-white font-semibold text-sm line-clamp-2 mb-1">{title}</h3>
-          <div className="flex items-center gap-2 text-gray-400 text-xs">
-            {episodes !== undefined && episodes > 0 && (
-              <span>{episodes} EP</span>
-            )}
+      <div className="mt-4 px-1">
+        <Link href={`/anime/${id}`}>
+          <h3 className="text-white font-bold text-sm line-clamp-1 group-hover:text-purple-400 transition-colors mb-1.5">
+            {title}
+          </h3>
+        </Link>
+        <div className="flex items-center gap-3 text-[10px] font-medium text-gray-500">
+          <div className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            <span>{duration || "24m"}</span>
           </div>
+          <div className="w-1 h-1 rounded-full bg-gray-700" />
+          <span>{episodes || 0} EPISODES</span>
         </div>
       </div>
     </motion.div>

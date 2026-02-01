@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE = "https://animo.qzz.io/api/v1";
-const FALLBACK_API = "https://api.isoumya.xyz/api/v1";
+const API_BASE = "https://ani-api20.vercel.app/api";
+const FALLBACK_API = "https://ani-api20.vercel.app/api";
 
 export async function GET(request: NextRequest) {
-  const endpoint = request.nextUrl.searchParams.get("endpoint") || "/home";
+  const endpoint = request.nextUrl.searchParams.get("endpoint") || "/";
   
   const tryFetch = async (base: string, timeoutMs: number = 15000) => {
     const controller = new AbortController();

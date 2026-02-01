@@ -1,4 +1,4 @@
-const HIANIME_API = "https://animo.qzz.io/api/v1";
+const HIANIME_API = "https://ani-api20.vercel.app/api";
 
 const FALLBACK_POSTER = "https://cdn.noitatnemucod.net/thumbnail/300x400/100/bcd84731a3eda4f4a306250769675065.jpg";
 
@@ -184,79 +184,40 @@ export interface SearchResult {
   searchFilters: Record<string, string>;
 }
 
-interface HiAnimeResult {
+interface NewApiAnime {
   id: string;
-  name?: string;
-  title?: string;
-  alternativeTitle?: string;
+  title: string;
   poster: string;
-  duration?: string;
-  type?: string;
-  rating?: string;
+  tvInfo?: {
+    showType?: string;
+    duration?: string;
+    sub?: number;
+    dub?: number;
+    rating?: string;
+  };
   rank?: number;
-  episodes?: { sub?: number; dub?: number; eps?: number };
-}
-
-interface HiAnimeSpotlight {
-  rank: number;
-  id: string;
-  name?: string;
-  title?: string;
-  alternativeTitle?: string;
-  jname?: string;
-  poster: string;
   description?: string;
-  synopsis?: string;
-  type: string;
-  quality: string;
-  duration: string;
-  otherInfo?: string[];
-  aired?: string;
-  episodes: { sub: number; dub: number; eps?: number };
 }
 
-function transformHiAnime(anime: HiAnimeResult): AnimeResult {
-  const title = anime.title || anime.name || "";
+function transformNewApiAnime(anime: NewApiAnime): AnimeResult {
   return {
     id: anime.id,
-    title: title,
-    name: title,
+    title: anime.title,
+    name: anime.title,
     poster: getValidPoster(anime.poster),
-    type: anime.type || "TV",
-    rating: anime.rating,
+    type: anime.tvInfo?.showType || "TV",
+    rating: anime.tvInfo?.rating,
     rank: anime.rank,
-    duration: anime.duration,
-    alternativeTitle: anime.alternativeTitle,
+    duration: anime.tvInfo?.duration,
     episodes: {
-      sub: anime.episodes?.sub || 0,
-      dub: anime.episodes?.dub || 0,
-      eps: anime.episodes?.eps || anime.episodes?.sub || 0,
+      sub: anime.tvInfo?.sub || 0,
+      dub: anime.tvInfo?.dub || 0,
+      eps: anime.tvInfo?.sub || 0,
     },
   };
 }
 
-function transformHiSpotlight(anime: HiAnimeSpotlight): SpotlightAnime {
-  const title = anime.title || anime.name || "";
-  return {
-    rank: anime.rank,
-    id: anime.id,
-    title: title,
-    alternativeTitle: anime.alternativeTitle || anime.jname || title,
-    poster: getValidPoster(anime.poster),
-    synopsis: anime.synopsis || anime.description || "No description available.",
-    type: anime.type || "TV",
-    quality: anime.quality || "HD",
-    duration: anime.duration || "24 min",
-    aired: anime.aired || anime.otherInfo?.[2] || "TBA",
-    episodes: {
-      sub: anime.episodes?.sub || 0,
-      dub: anime.episodes?.dub || 0,
-      eps: anime.episodes?.eps || anime.episodes?.sub || 0,
-    },
-  };
-}
-
-async function fetchHiAnime<T>(endpoint: string, retries = 3): Promise<T> {
+async function fetchNewApi<T>(endpoint: string, retries = 3): Promise<T> {
   const isBrowser = typeof window !== "undefined";
   
   let url: string;
@@ -285,7 +246,7 @@ async function fetchHiAnime<T>(endpoint: string, retries = 3): Promise<T> {
       
       const json = await res.json();
       if (json.success === false) throw new Error(json.message || "API unavailable");
-      return json.data || json;
+      return json.results || json;
     } catch (error) {
       lastError = error as Error;
       if (attempt < retries - 1 && (error as Error).name !== 'AbortError') {
@@ -300,46 +261,62 @@ async function fetchHiAnime<T>(endpoint: string, retries = 3): Promise<T> {
 
 export async function getHome(): Promise<HomeData> {
   try {
-    const data = await fetchHiAnime<{
-      spotlight?: HiAnimeSpotlight[];
-      spotlightAnimes?: HiAnimeSpotlight[];
-      trending?: HiAnimeResult[];
-      trendingAnimes?: HiAnimeResult[];
-      latestEpisode?: HiAnimeResult[];
-      latestEpisodeAnimes?: HiAnimeResult[];
-      topUpcoming?: HiAnimeResult[];
-      topUpcomingAnimes?: HiAnimeResult[];
-      top10?: { today?: HiAnimeResult[]; week?: HiAnimeResult[]; month?: HiAnimeResult[] };
-      top10Animes?: { today?: HiAnimeResult[]; week?: HiAnimeResult[]; month?: HiAnimeResult[] };
-      topAiring?: HiAnimeResult[];
-      topAiringAnimes?: HiAnimeResult[];
-      mostPopular?: HiAnimeResult[];
-      mostPopularAnimes?: HiAnimeResult[];
-      mostFavorite?: HiAnimeResult[];
-      mostFavoriteAnimes?: HiAnimeResult[];
-      latestCompleted?: HiAnimeResult[];
-      latestCompletedAnimes?: HiAnimeResult[];
-      newAdded?: HiAnimeResult[];
+    const data = await fetchNewApi<{
+      spotlights?: any[];
+      trending?: any[];
+      latestEpisode?: any[];
+      topUpcoming?: any[];
+      top10?: { today?: any[]; week?: any[]; month?: any[] };
+      topAiring?: any[];
+      mostPopular?: any[];
+      mostFavorite?: any[];
+      latestCompleted?: any[];
+      newAdded?: any[];
       genres?: string[];
-    }>("/home");
+    }>("/");
 
-    const top10Data = data.top10 || data.top10Animes || {};
+    // Top 10 might need a separate call if not in home
+    let top10 = data.top10 || { today: [], week: [], month: [] };
+    if (!data.top10) {
+      try {
+        const top10Data = await fetchNewApi<any>("/top-ten");
+        top10 = top10Data.topTen || top10;
+      } catch (e) {
+        console.error("Error fetching top 10:", e);
+      }
+    }
 
     return {
-      spotlight: (data.spotlight || data.spotlightAnimes || []).map(transformHiSpotlight),
-      trending: (data.trending || data.trendingAnimes || []).map(transformHiAnime),
-      latestEpisode: (data.latestEpisode || data.latestEpisodeAnimes || []).map(transformHiAnime),
-      topUpcoming: (data.topUpcoming || data.topUpcomingAnimes || []).map(transformHiAnime),
+      spotlight: (data.spotlights || []).map((a, i) => ({
+        rank: i + 1,
+        id: a.id,
+        title: a.title,
+        alternativeTitle: a.title,
+        poster: getValidPoster(a.poster),
+        synopsis: a.description || "No description available.",
+        type: a.tvInfo?.showType || "TV",
+        quality: "HD",
+        duration: a.tvInfo?.duration || "24 min",
+        aired: "TBA",
+        episodes: {
+          sub: a.tvInfo?.sub || 0,
+          dub: a.tvInfo?.dub || 0,
+          eps: a.tvInfo?.sub || 0,
+        },
+      })),
+      trending: (data.trending || []).map(transformNewApiAnime),
+      latestEpisode: (data.latestEpisode || []).map(transformNewApiAnime),
+      topUpcoming: (data.topUpcoming || []).map(transformNewApiAnime),
       top10: {
-        today: (top10Data.today || []).map(transformHiAnime),
-        week: (top10Data.week || []).map(transformHiAnime),
-        month: (top10Data.month || []).map(transformHiAnime),
+        today: (top10.today || []).map(transformNewApiAnime),
+        week: (top10.week || []).map(transformNewApiAnime),
+        month: (top10.month || []).map(transformNewApiAnime),
       },
-      topAiring: (data.topAiring || data.topAiringAnimes || []).map(transformHiAnime),
-      mostPopular: (data.mostPopular || data.mostPopularAnimes || []).map(transformHiAnime),
-      mostFavorite: (data.mostFavorite || data.mostFavoriteAnimes || []).map(transformHiAnime),
-      latestCompleted: (data.latestCompleted || data.latestCompletedAnimes || []).map(transformHiAnime),
-      newAdded: (data.newAdded || data.latestEpisode || data.latestEpisodeAnimes || []).map(transformHiAnime),
+      topAiring: (data.topAiring || []).map(transformNewApiAnime),
+      mostPopular: (data.mostPopular || []).map(transformNewApiAnime),
+      mostFavorite: (data.mostFavorite || []).map(transformNewApiAnime),
+      latestCompleted: (data.latestCompleted || []).map(transformNewApiAnime),
+      newAdded: (data.newAdded || []).map(transformNewApiAnime),
       genres: data.genres || ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Slice of Life", "Sports", "Supernatural"],
     };
   } catch (error) {
@@ -361,236 +338,107 @@ export async function getHome(): Promise<HomeData> {
 }
 
 export async function getAnimeInfo(id: string): Promise<AnimeInfo> {
-  const data = await fetchHiAnime<{
-    title?: string;
-    alternativeTitle?: string;
-    japanese?: string;
-    id?: string;
-    poster?: string;
-    rating?: string;
-    type?: string;
-    is18Plus?: boolean;
-    episodes?: { sub?: number; dub?: number; eps?: number };
-    synopsis?: string;
-    synonyms?: string | null;
-    aired?: { from?: string; to?: string };
-    premiered?: string;
-    duration?: string;
-    status?: string;
-    MAL_score?: string;
-    genres?: string[];
-    studios?: string[];
-    producers?: string[];
-    moreSeasons?: Array<{ id: string; title: string; alternativeTitle: string; poster: string; isActive: boolean }>;
-    related?: Array<{ id: string; title: string; alternativeTitle?: string; poster: string; type?: string; episodes?: { sub?: number; dub?: number; eps?: number } }>;
-    mostPopular?: Array<{ id: string; title: string; alternativeTitle?: string; poster: string; type?: string; episodes?: { sub?: number; dub?: number; eps?: number } }>;
-    recommended?: Array<{ id: string; title: string; alternativeTitle?: string; poster: string; type?: string; duration?: string; episodes?: { sub?: number; dub?: number; eps?: number }; is18Plus?: boolean }>;
-    anime?: {
-      info?: {
-        id: string;
-        anilistId?: number;
-        malId?: number;
-        name: string;
-        poster: string;
-        description?: string;
-        stats?: { rating?: string; quality?: string; episodes?: { sub?: number; dub?: number }; type?: string; duration?: string };
-        promotionalVideos?: Array<{ title: string; source: string; thumbnail: string }>;
-        charactersVoiceActors?: Array<{ character: { id: string; poster: string; name: string; cast: string }; voiceActor: { id: string; poster: string; name: string; cast: string } }>;
-      };
-      moreInfo?: {
-        japanese?: string;
-        synonyms?: string;
-        aired?: string;
-        premiered?: string;
-        duration?: string;
-        status?: string;
-        malscore?: string;
-        genres?: string[];
-        studios?: string;
-        producers?: string[];
-      };
-    };
-    seasons?: Array<{ id: string; name: string; title: string; poster: string; isCurrent: boolean }>;
-    mostPopularAnimes?: HiAnimeResult[];
-    relatedAnimes?: HiAnimeResult[];
-    recommendedAnimes?: HiAnimeResult[];
-  }>(`/anime/${id}`);
-
-  if (data.anime?.info) {
-    return {
-      anime: {
-        info: {
-          id: data.anime.info.id,
-          anilistId: data.anime.info.anilistId || 0,
-          malId: data.anime.info.malId || 0,
-          name: data.anime.info.name,
-          poster: data.anime.info.poster,
-          description: data.anime.info.description || "No description available.",
-          stats: {
-            rating: data.anime.info.stats?.rating || "N/A",
-            quality: data.anime.info.stats?.quality || "HD",
-            episodes: {
-              sub: data.anime.info.stats?.episodes?.sub || 0,
-              dub: data.anime.info.stats?.episodes?.dub || 0,
-            },
-            type: data.anime.info.stats?.type || "TV",
-            duration: data.anime.info.stats?.duration || "24 min",
-          },
-          promotionalVideos: data.anime.info.promotionalVideos || [],
-          charactersVoiceActors: data.anime.info.charactersVoiceActors || [],
-        },
-        moreInfo: {
-          japanese: data.anime.moreInfo?.japanese || "",
-          synonyms: data.anime.moreInfo?.synonyms || "",
-          aired: data.anime.moreInfo?.aired || "TBA",
-          premiered: data.anime.moreInfo?.premiered || "TBA",
-          duration: data.anime.moreInfo?.duration || "24 min",
-          status: data.anime.moreInfo?.status || "Unknown",
-          malscore: data.anime.moreInfo?.malscore || "N/A",
-          genres: data.anime.moreInfo?.genres || [],
-          studios: data.anime.moreInfo?.studios || "",
-          producers: data.anime.moreInfo?.producers || [],
-        },
-      },
-      seasons: data.seasons || [],
-      mostPopularAnimes: data.mostPopularAnimes?.map(transformHiAnime) || [],
-      relatedAnimes: data.relatedAnimes?.map(transformHiAnime) || [],
-      recommendedAnimes: data.recommendedAnimes?.map(transformHiAnime) || [],
-    };
-  }
-
-  if (!data.title && !data.id) throw new Error("Anime not found");
-
-  const transformRelated = (items: typeof data.related) => 
-    items?.map(item => ({
-      id: item.id,
-      title: item.title,
-      name: item.title,
-      poster: item.poster,
-      type: item.type || "TV",
-      episodes: { sub: item.episodes?.sub || 0, dub: item.episodes?.dub || 0, eps: item.episodes?.eps || 0 },
-    })) || [];
+  const res = await fetchNewApi<any>(`/info?id=${id}`);
+  const data = res.data;
 
   return {
     anime: {
       info: {
-        id: data.id || id,
-        anilistId: 0,
-        malId: 0,
-        name: data.title || "Unknown",
-        poster: data.poster || "",
-        description: data.synopsis || "No description available.",
+        id: data.id,
+        anilistId: data.anilistId || 0,
+        malId: data.malId || 0,
+        name: data.title,
+        poster: getValidPoster(data.poster),
+        description: data.description || "No description available.",
         stats: {
-          rating: data.rating || "N/A",
-          quality: "HD",
+          rating: data.animeInfo?.Rating || "N/A",
+          quality: data.animeInfo?.Quality || "HD",
           episodes: {
-            sub: data.episodes?.sub || 0,
-            dub: data.episodes?.dub || 0,
+            sub: parseInt(data.animeInfo?.Episodes?.sub) || 0,
+            dub: parseInt(data.animeInfo?.Episodes?.dub) || 0,
           },
-          type: data.type || "TV",
-          duration: data.duration || "24 min",
+          type: data.animeInfo?.Type || "TV",
+          duration: data.animeInfo?.Duration || "24 min",
         },
         promotionalVideos: [],
         charactersVoiceActors: [],
       },
       moreInfo: {
-        japanese: data.japanese || "",
-        synonyms: data.synonyms || "",
-        aired: data.aired?.from ? `${data.aired.from} to ${data.aired.to || "?"}` : "TBA",
-        premiered: data.premiered || "TBA",
-        duration: data.duration || "24 min",
-        status: data.status || "Unknown",
-        malscore: data.MAL_score || "N/A",
-        genres: data.genres || [],
-        studios: Array.isArray(data.studios) ? data.studios.join(", ") : (data.studios || ""),
-        producers: data.producers || [],
+        japanese: data.animeInfo?.Japanese || "",
+        synonyms: data.animeInfo?.Synonyms || "",
+        aired: data.animeInfo?.Aired || "TBA",
+        premiered: data.animeInfo?.Premiered || "TBA",
+        duration: data.animeInfo?.Duration || "24 min",
+        status: data.animeInfo?.Status || "Unknown",
+        malscore: data.animeInfo?.["MAL Score"] || "N/A",
+        genres: data.animeInfo?.Genres || [],
+        studios: data.animeInfo?.Studios || "",
+        producers: data.animeInfo?.Producers || [],
       },
     },
-    seasons: data.moreSeasons?.map(s => ({
+    seasons: (res.seasons || []).map((s: any) => ({
       id: s.id,
-      name: s.alternativeTitle || s.title,
+      name: s.title,
       title: s.title,
       poster: s.poster,
-      isCurrent: s.isActive,
-    })) || [],
-    mostPopularAnimes: transformRelated(data.mostPopular),
-    relatedAnimes: transformRelated(data.related),
-    recommendedAnimes: transformRelated(data.recommended),
+      isCurrent: s.isCurrent || false,
+    })),
+    mostPopularAnimes: [],
+    relatedAnimes: (res.relatedAnime || []).map(transformNewApiAnime),
+    recommendedAnimes: (res.recommendedAnime || []).map(transformNewApiAnime),
   };
 }
 
 export async function getEpisodes(id: string): Promise<EpisodesData> {
-  const response = await fetchHiAnime<
-    | Array<{ title?: string; id: string; episodeNumber: number; isFiller?: boolean }>
-    | { totalEpisodes?: number; episodes?: Array<{ title?: string; episodeId: string; number: number; isFiller?: boolean }> }
-  >(`/episodes/${id}`);
-  
-  if (Array.isArray(response)) {
-    return {
-      totalEpisodes: response.length,
-      episodes: response.map((ep) => ({
-        title: ep.title || `Episode ${ep.episodeNumber}`,
-        episodeId: ep.id,
-        number: ep.episodeNumber,
-        isFiller: ep.isFiller || false,
-      })),
-    };
-  }
-  
+  const data = await fetchNewApi<any>(`/episodes/${id}`);
   return {
-    totalEpisodes: response.totalEpisodes || response.episodes?.length || 0,
-    episodes: response.episodes?.map((ep) => ({
-      title: ep.title || `Episode ${ep.number}`,
-      episodeId: ep.episodeId,
-      number: ep.number,
+    totalEpisodes: data.totalEpisodes || 0,
+    episodes: (data.episodes || []).map((ep: any) => ({
+      title: ep.title || `Episode ${ep.episode_no}`,
+      episodeId: ep.id,
+      number: ep.episode_no,
       isFiller: ep.isFiller || false,
-    })) || [],
+    })),
   };
 }
 
-export async function getServers(episodeId: string): Promise<ServersData> {
-  const data = await fetchHiAnime<{ sub?: Server[]; dub?: Server[]; raw?: Server[]; episodeId?: string; episodeNo?: number }>(`/servers?id=${encodeURIComponent(episodeId)}`);
+export async function getServers(animeId: string, episodeId: string): Promise<ServersData> {
+  const data = await fetchNewApi<any[]>(`/servers/${animeId}?ep=${episodeId}`);
+  const sub = data.filter(s => s.type === "sub").map((s, i) => ({ serverName: s.serverName, serverId: i }));
+  const dub = data.filter(s => s.type === "dub").map((s, i) => ({ serverName: s.serverName, serverId: i }));
+  const raw = data.filter(s => s.type === "raw").map((s, i) => ({ serverName: s.serverName, serverId: i }));
+  
   return {
-    sub: data.sub || [],
-    dub: data.dub || [],
-    raw: data.raw || [],
-    episodeId: data.episodeId || episodeId,
-    episodeNo: data.episodeNo || 1,
+    sub,
+    dub,
+    raw,
+    episodeId: episodeId,
+    episodeNo: 1, // Will be updated by caller if needed
   };
 }
 
-export async function getStream(episodeId: string, server: string = "hd-2", category: string = "sub"): Promise<StreamData> {
-  const data = await fetchHiAnime<{ tracks?: StreamData["tracks"]; intro?: StreamData["intro"]; outro?: StreamData["outro"]; sources?: StreamData["sources"]; anilistID?: number; malID?: number }>(`/stream?id=${encodeURIComponent(episodeId)}&server=${server}&type=${category}`);
+export async function getStream(animeId: string, episodeId: string, server: string = "hd-1", category: string = "sub"): Promise<StreamData> {
+  const data = await fetchNewApi<any>(`/stream?id=${animeId}&ep=${episodeId}&server=${server}&type=${category}`);
+  const link = data.streamingLink?.[0] || {};
+  
   return {
-    tracks: data.tracks || [],
-    intro: data.intro || { start: 0, end: 0 },
-    outro: data.outro || { start: 0, end: 0 },
-    sources: data.sources || [],
-    anilistID: data.anilistID || 0,
-    malID: data.malID || 0,
+    tracks: link.tracks || [],
+    intro: link.intro || { start: 0, end: 0 },
+    outro: link.outro || { start: 0, end: 0 },
+    sources: link.link ? [{ url: link.link.file, type: "hls" }] : [],
+    anilistID: 0,
+    malID: 0,
   };
 }
 
 export async function search(keyword: string, page: number = 1): Promise<SearchResult> {
-  const data = await fetchHiAnime<{ 
-    response?: HiAnimeResult[];
-    animes?: HiAnimeResult[];
-    mostPopularAnimes?: HiAnimeResult[];
-    pageInfo?: { currentPage?: number; hasNextPage?: boolean; totalPages?: number };
-    currentPage?: number;
-    hasNextPage?: boolean;
-    totalPages?: number;
-  }>(`/search?keyword=${encodeURIComponent(keyword)}&page=${page}`);
-  
-  const animeList = data.response || data.animes || [];
-  const pageInfo = data.pageInfo || {};
-  
+  const data = await fetchNewApi<any[]>(`/search?keyword=${encodeURIComponent(keyword)}&page=${page}`);
   return {
-    animes: animeList.map(transformHiAnime),
-    mostPopularAnimes: data.mostPopularAnimes?.map(transformHiAnime) || [],
-    currentPage: pageInfo.currentPage || data.currentPage || page,
-    hasNextPage: pageInfo.hasNextPage ?? data.hasNextPage ?? false,
-    totalPages: pageInfo.totalPages || data.totalPages || 1,
+    animes: data.map(transformNewApiAnime),
+    mostPopularAnimes: [],
+    currentPage: page,
+    hasNextPage: false,
+    totalPages: 1,
     searchQuery: keyword,
     searchFilters: {},
   };
@@ -600,85 +448,70 @@ export async function filter(params: { genre?: string; type?: string; status?: s
   const queryParams = new URLSearchParams();
   if (params.genre) queryParams.set("genres", params.genre);
   if (params.type) queryParams.set("type", params.type);
-  if (params.status) queryParams.set("status", params.status.replace(/-/g, "_"));
-  if (params.season) queryParams.set("season", params.season);
+  if (params.status) queryParams.set("status", params.status);
   if (params.sort) queryParams.set("sort", params.sort);
   queryParams.set("page", String(params.page || 1));
 
-  const data = await fetchHiAnime<{ 
-    response?: HiAnimeResult[];
-    animes?: HiAnimeResult[];
-    pageInfo?: { currentPage?: number; hasNextPage?: boolean; totalPages?: number };
-    currentPage?: number;
-    hasNextPage?: boolean;
-    totalPages?: number;
-  }>(`/filter?${queryParams.toString()}`);
-  
-  const animeList = data.response || data.animes || [];
-  const pageInfo = data.pageInfo || {};
-  
+  const data = await fetchNewApi<any>(`/filter?${queryParams.toString()}`);
   return {
-    animes: animeList.map(transformHiAnime),
+    animes: (data.data || []).map(transformNewApiAnime),
     mostPopularAnimes: [],
-    currentPage: pageInfo.currentPage || data.currentPage || params.page || 1,
-    hasNextPage: pageInfo.hasNextPage ?? data.hasNextPage ?? false,
-    totalPages: pageInfo.totalPages || data.totalPages || 1,
+    currentPage: params.page || 1,
+    hasNextPage: data.totalPages > (params.page || 1),
+    totalPages: data.totalPages || 1,
     searchQuery: "",
     searchFilters: params as Record<string, string>,
   };
 }
 
 export async function getTopAiring(page: number = 1): Promise<{ animes: AnimeResult[]; hasNextPage: boolean }> {
-  const data = await fetchHiAnime<{ response?: HiAnimeResult[]; animes?: HiAnimeResult[]; pageInfo?: { hasNextPage?: boolean }; hasNextPage?: boolean }>(`/animes/top-airing?page=${page}`);
-  const animeList = data.response || data.animes || [];
-  return { animes: animeList.map(transformHiAnime), hasNextPage: data.pageInfo?.hasNextPage ?? data.hasNextPage ?? false };
+  const data = await fetchNewApi<any>(`/top-airing?page=${page}`);
+  return { animes: (data.data || []).map(transformNewApiAnime), hasNextPage: data.totalPages > page };
 }
 
 export async function getMostPopular(page: number = 1): Promise<{ animes: AnimeResult[]; hasNextPage: boolean }> {
-  const data = await fetchHiAnime<{ response?: HiAnimeResult[]; animes?: HiAnimeResult[]; pageInfo?: { hasNextPage?: boolean }; hasNextPage?: boolean }>(`/animes/most-popular?page=${page}`);
-  const animeList = data.response || data.animes || [];
-  return { animes: animeList.map(transformHiAnime), hasNextPage: data.pageInfo?.hasNextPage ?? data.hasNextPage ?? false };
+  const data = await fetchNewApi<any>(`/most-popular?page=${page}`);
+  return { animes: (data.data || []).map(transformNewApiAnime), hasNextPage: data.totalPages > page };
 }
 
 export async function getRecentlyAdded(page: number = 1): Promise<{ animes: AnimeResult[]; hasNextPage: boolean }> {
-  const data = await fetchHiAnime<{ response?: HiAnimeResult[]; animes?: HiAnimeResult[]; pageInfo?: { hasNextPage?: boolean }; hasNextPage?: boolean }>(`/animes/recently-added?page=${page}`);
-  const animeList = data.response || data.animes || [];
-  return { animes: animeList.map(transformHiAnime), hasNextPage: data.pageInfo?.hasNextPage ?? data.hasNextPage ?? false };
+  const data = await fetchNewApi<any>(`/recently-updated?page=${page}`);
+  return { animes: (data.data || []).map(transformNewApiAnime), hasNextPage: data.totalPages > page };
 }
 
 export async function getMovies(page: number = 1): Promise<{ animes: AnimeResult[]; hasNextPage: boolean }> {
-  const data = await fetchHiAnime<{ response?: HiAnimeResult[]; animes?: HiAnimeResult[]; pageInfo?: { hasNextPage?: boolean }; hasNextPage?: boolean }>(`/animes/movie?page=${page}`);
-  const animeList = data.response || data.animes || [];
-  return { animes: animeList.map(transformHiAnime), hasNextPage: data.pageInfo?.hasNextPage ?? data.hasNextPage ?? false };
+  const data = await fetchNewApi<any>(`/movie?page=${page}`);
+  return { animes: (data.data || []).map(transformNewApiAnime), hasNextPage: data.totalPages > page };
 }
 
 export async function getTV(page: number = 1): Promise<{ animes: AnimeResult[]; hasNextPage: boolean }> {
-  const data = await fetchHiAnime<{ response?: HiAnimeResult[]; animes?: HiAnimeResult[]; pageInfo?: { hasNextPage?: boolean }; hasNextPage?: boolean }>(`/animes/tv?page=${page}`);
-  const animeList = data.response || data.animes || [];
-  return { animes: animeList.map(transformHiAnime), hasNextPage: data.pageInfo?.hasNextPage ?? data.hasNextPage ?? false };
+  const data = await fetchNewApi<any>(`/tv?page=${page}`);
+  return { animes: (data.data || []).map(transformNewApiAnime), hasNextPage: data.totalPages > page };
 }
 
 export async function getGenres(): Promise<string[]> {
-  const data = await fetchHiAnime<{ genres?: string[] }>("/genres");
-  return data.genres || ["Action", "Adventure", "Cars", "Comedy", "Dementia", "Demons", "Drama", "Ecchi", "Fantasy", "Game", "Harem", "Historical", "Horror", "Isekai", "Josei", "Kids", "Magic", "Martial Arts", "Mecha", "Military", "Music", "Mystery", "Parody", "Police", "Psychological", "Romance", "Samurai", "School", "Sci-Fi", "Seinen", "Shoujo", "Shoujo Ai", "Shounen", "Shounen Ai", "Slice of Life", "Space", "Sports", "Super Power", "Supernatural", "Thriller", "Vampire"];
+  const data = await fetchNewApi<string[]>("/genres");
+  return data || [];
 }
 
-export async function getSchedule(): Promise<{ scheduledAnimes: AnimeResult[] }> {
-  const data = await fetchHiAnime<{ scheduledAnimes?: HiAnimeResult[] }>("/schedules");
-  return { scheduledAnimes: data.scheduledAnimes?.map(transformHiAnime) || [] };
+export async function getSchedule(date?: string): Promise<{ scheduledAnimes: AnimeResult[] }> {
+  const data = await fetchNewApi<any[]>(`/schedule${date ? `?date=${date}` : ""}`);
+  return { scheduledAnimes: data.map(transformNewApiAnime) || [] };
 }
 
 export async function getRandom(): Promise<AnimeInfo> {
-  const data = await fetchHiAnime<{ id?: string }>("/random");
-  if (data.id) return getAnimeInfo(data.id);
+  const data = await fetchNewApi<any>("/random");
+  if (data.results?.data?.id) return getAnimeInfo(data.results.data.id);
   throw new Error("No random anime found");
 }
 
 export async function getSuggestions(keyword: string): Promise<{ suggestions: AnimeResult[] }> {
-  const data = await fetchHiAnime<{ animes?: HiAnimeResult[] }>(`/suggestion?q=${encodeURIComponent(keyword)}`);
-  return { suggestions: data.animes?.map(transformHiAnime) || [] };
+  const data = await fetchNewApi<any[]>(`/search/suggest?keyword=${encodeURIComponent(keyword)}`);
+  return { suggestions: data.map(transformNewApiAnime) || [] };
 }
 
-export function getEmbedUrl(episodeId: string, server: string = "hd-2", type: string = "sub"): string {
-  return `https://animo.qzz.io/api/v1/embed/${server}/${episodeId}/${type}`;
+export function getEmbedUrl(episodeId: string, server: string = "hd-1", type: string = "sub"): string {
+  // The new API doesn't seem to have a direct embed URL in the docs, 
+  // but we can use our own player with the stream link.
+  return `/api/stream/embed?id=${episodeId}&server=${server}&type=${type}`;
 }
